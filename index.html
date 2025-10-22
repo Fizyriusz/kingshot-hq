@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kingshot HQ</title>
+    <title>Kingshot HQ v2.0</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -26,9 +26,31 @@
         </div>
 
         <div id="app-view" class="hidden">
-            <h2>Aktywny Event: Viking Vengeance</h2>
-            <div id="groups-container">
-                </div>
+            
+            <nav id="tab-nav">
+                <button data-tab="members-view" class="active-tab">Członkowie</button>
+                <button data-tab="events-view">Eventy</button>
+            </nav>
+
+            <div id="tab-content">
+
+                <section id="members-view" class="tab-pane active">
+                    <h3>Zarządzanie Członkami Sojuszu</h3>
+                    <form id="add-player-form">
+                        <input type="text" id="player-name-input" placeholder="Nazwa nowego gracza" required>
+                        <button type="submit">Dodaj do Sojuszu</button>
+                    </form>
+                    <div id="players-list-container">
+                        </div>
+                </section>
+
+                <section id="events-view" class="tab-pane hidden">
+                    <h3>Zarządzanie Eventami</h3>
+                    <div id="events-list-container">
+                        </div>
+                </section>
+
+            </div>
         </div>
     </main>
 
