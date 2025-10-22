@@ -1,3 +1,4 @@
+/* Podstawowe style */
 body {
     font-family: sans-serif;
     background-color: #2c2f33;
@@ -13,22 +14,24 @@ header {
     padding-bottom: 10px;
 }
 main {
-    max-width: 800px;
+    max-width: 900px;
     margin: 20px auto;
 }
 .hidden {
     display: none !important;
 }
+
+/* Style formularzy */
 form {
     display: flex;
-    flex-direction: column;
     gap: 10px;
-    max-width: 300px;
+    margin-bottom: 20px;
 }
-input, button {
+input, button, select {
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #7289da;
+    font-size: 1em;
 }
 button {
     background-color: #7289da;
@@ -36,17 +39,48 @@ button {
     cursor: pointer;
     font-weight: bold;
 }
+button:hover {
+    background-color: #677bc4;
+}
 .error {
     color: #f04747;
     margin-top: 10px;
 }
-.group-card {
+
+/* NOWE STYLE DLA ZAKŁADEK */
+nav#tab-nav {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #4f545c;
+}
+nav#tab-nav button {
+    background-color: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 15px 20px;
+    font-size: 1.1em;
+    color: #99aab5;
+}
+nav#tab-nav button.active-tab {
+    color: #ffffff;
+    border-bottom: 3px solid #7289da;
+}
+.tab-pane {
+    padding: 10px;
+}
+
+/* Style dla kart i list */
+.group-card, .player-item {
     background-color: #23272a;
     border: 1px solid #99aab5;
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 15px;
 }
-.group-card h3 {
-    margin-top: 0;
+.player-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.player-item button {
+    background-color: #f04747;
 }
