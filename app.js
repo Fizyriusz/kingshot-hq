@@ -48,7 +48,7 @@ async function renderMembersView() {
 
 // --- LOGIKA ZAKŁADKI "EVENTY" ---
 async function renderEventsListView() {
-    addEventForm.classList.remove('hidden'); // Pokaż formularz dodawania eventu
+    addEventForm.classList.remove('hidden');
     const { data: events, error } = await supabaseClient.from('events').select('*').order('created_at', { ascending: false });
     if (error) { console.error("Błąd pobierania eventów:", error); return; }
     eventsListContainer.innerHTML = events.map(event => `
@@ -58,160 +58,76 @@ async function renderEventsListView() {
     `).join('');
 }
 
-// NOWA, W PEŁNI FUNKCJONALNA WERSJA WIDOKU SZCZEGÓŁÓW
 async function renderEventDetailView(eventId) {
-    addEventForm.classList.add('hidden'); // Ukryj formularz dodawania eventu
-    
-    // 1. Pobierz wszystkie dane eventu, grup, członków grup i ich nazw z tabeli 'players'
-    const { data: event, error: eventError } = await supabaseClient
-        .from('events')
-        .select(`
-            name,
-            groups (
-                id,
-                name,
-                group_members (
-                    id,
-                    status,
-                    players ( id, name )
-                )
-            )
-        `)
-        .eq('id', eventId)
-        .single(); // .single() zwraca jeden obiekt zamiast tablicy
-
-    // 2. Pobierz wszystkich aktywnych graczy z sojuszu
+    addEventForm.classList.add('hidden');
+    const { data: event, error: eventError } = await supabaseClient.from('events').select(`name, groups (id, name, group_members (id, status, players ( id, name )))`).eq('id', eventId).single();
     const { data: allPlayers, error: playersError } = await supabaseClient.from('players').select('id, name').eq('is_active', true);
+    if (eventError || playersError) { console.error("Błąd ładowania szczegółów eventu:", eventError || playersError); eventsListContainer.innerHTML = `<p class="error">Nie udało się załadować danych eventu.</p>`; return; }
 
-    if (eventError || playersError) {
-        console.error("Błąd ładowania szczegółów eventu:", eventError || playersError);
-        eventsListContainer.innerHTML = `<p class="error">Nie udało się załadować danych eventu.</p>`;
-        return;
-    }
-
-    // Renderowanie widoku
-    let html = `
-        <div class="event-detail-header">
-            <h2>Zarządzanie eventem: ${event.name}</h2>
-            <button id="back-to-events-list">Powrót do listy</button>
-        </div>
-        <form id="create-group-form">
-            <input type="text" name="group-name" placeholder="Nazwa nowej grupy" required>
-            <button type="submit">Stwórz grupę</button>
-        </form>
-        <div id="groups-management-container">
-    `;
-
-    // Pętla renderująca każdą grupę
+    let html = `<div class="event-detail-header"><h2>Zarządzanie eventem: ${event.name}</h2><button id="back-to-events-list">Powrót do listy</button></div><form id="create-group-form"><input type="text" name="group-name" placeholder="Nazwa nowej grupy" required><button type="submit">Stwórz grupę</button></form><div id="groups-management-container">`;
     event.groups.forEach(group => {
-        // Logika do znalezienia graczy, którzy nie są jeszcze w tej grupie
         const membersInThisGroupIds = group.group_members.map(gm => gm.players.id);
         const availablePlayers = allPlayers.filter(p => !membersInThisGroupIds.includes(p.id));
-        
-        html += `
-            <div class="group-card">
-                <h3>${group.name}</h3>
-                <ul>
-                    ${group.group_members.map(member => `
-                        <li>
-                            ${member.players.name}
-                            <div>
-                                <select class="status-select" data-member-id="${member.id}">
-                                    <option value="Nieokreślony" ${member.status === 'Nieokreślony' ? 'selected' : ''}>Nieokreślony</option>
-                                    <option value="Aktywny" ${member.status === 'Aktywny' ? 'selected' : ''}>Aktywny</option>
-                                    <option value="Nieaktywny" ${member.status === 'Nieaktywny' ? 'selected' : ''}>Nieaktywny</option>
-                                    <option value="Problem" ${member.status === 'Problem' ? 'selected' : ''}>Problem</option>
-                                </select>
-                                <button class="remove-from-group-button" data-member-id="${member.id}">X</button>
-                            </div>
-                        </li>
-                    `).join('') || '<li>Brak członków w tej grupie.</li>'}
-                </ul>
-                <form class="add-player-to-group-form">
-                    <input type="hidden" name="group-id" value="${group.id}">
-                    <select name="player-id" required>
-                        <option value="" disabled selected>Wybierz gracza...</option>
-                        ${availablePlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
-                    </select>
-                    <button type="submit">Dodaj do grupy</button>
-                </form>
-            </div>
-        `;
+        html += `<div class="group-card"><h3>${group.name}</h3><ul>${group.group_members.map(member => `<li>${member.players.name}<div><select class="status-select" data-member-id="${member.id}"><option value="Nieokreślony" ${member.status === 'Nieokreślony' ? 'selected' : ''}>Nieokreślony</option><option value="Aktywny" ${member.status === 'Aktywny' ? 'selected' : ''}>Aktywny</option><option value="Nieaktywny" ${member.status === 'Nieaktywny' ? 'selected' : ''}>Nieaktywny</option><option value="Problem" ${member.status === 'Problem' ? 'selected' : ''}>Problem</option></select><button class="remove-from-group-button" data-member-id="${member.id}">X</button></div></li>`).join('') || '<li>Brak członków.</li>'}</ul><form class="add-player-to-group-form"><input type="hidden" name="group-id" value="${group.id}"><select name="player-id" required><option value="" disabled selected>Wybierz gracza...</option>${availablePlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}</select><button type="submit">Dodaj</button></form></div>`;
     });
-
     html += `</div>`;
     eventsListContainer.innerHTML = html;
-
-    // Podpięcie wszystkich event listenerów dla tego widoku
     attachDetailViewListeners(eventId);
 }
 
-// NOWA FUNKCJA DO PODPINANIA EVENT LISTENERÓW W WIDOKU SZCZEGÓŁÓW
 function attachDetailViewListeners(eventId) {
     document.getElementById('back-to-events-list').addEventListener('click', renderEventsListView);
-
     document.getElementById('create-group-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const groupName = e.target.querySelector('input[name="group-name"]').value.trim();
-        if (!groupName) return;
+        e.preventDefault(); const groupName = e.target.querySelector('input[name="group-name"]').value.trim(); if (!groupName) return;
         const { error } = await supabaseClient.from('groups').insert({ name: groupName, event_id: eventId });
-        if (error) console.error("Błąd tworzenia grupy:", error);
-        else renderEventDetailView(eventId); // Odśwież widok
+        if (error) console.error("Błąd tworzenia grupy:", error); else renderEventDetailView(eventId);
     });
-
     document.querySelectorAll('.add-player-to-group-form').forEach(form => {
         form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const groupId = e.target.querySelector('input[name="group-id"]').value;
-            const playerId = e.target.querySelector('select[name="player-id"]').value;
-            if (!playerId) return;
+            e.preventDefault(); const groupId = e.target.querySelector('input[name="group-id"]').value; const playerId = e.target.querySelector('select[name="player-id"]').value; if (!playerId) return;
             const { error } = await supabaseClient.from('group_members').insert({ group_id: groupId, player_id: playerId });
-            if (error) console.error("Błąd dodawania gracza do grupy:", error);
-            else renderEventDetailView(eventId);
+            if (error) console.error("Błąd dodawania gracza do grupy:", error); else renderEventDetailView(eventId);
         });
     });
-
     document.querySelectorAll('.status-select').forEach(select => {
         select.addEventListener('change', async (e) => {
-            const memberId = e.target.dataset.memberId;
-            const newStatus = e.target.value;
+            const memberId = e.target.dataset.memberId; const newStatus = e.target.value;
             const { error } = await supabaseClient.from('group_members').update({ status: newStatus }).eq('id', memberId);
             if (error) console.error("Błąd aktualizacji statusu:", error);
-            // Nie trzeba odświeżać, UI jest już zaktualizowane
         });
     });
-    
     document.querySelectorAll('.remove-from-group-button').forEach(button => {
         button.addEventListener('click', async (e) => {
             const memberId = e.target.dataset.memberId;
-            if (confirm("Czy na pewno chcesz usunąć tego gracza z grupy?")) {
+            if (confirm("Na pewno usunąć gracza z grupy?")) {
                  const { error } = await supabaseClient.from('group_members').delete().eq('id', memberId);
-                 if (error) console.error("Błąd usuwania z grupy:", error);
-                 else renderEventDetailView(eventId);
+                 if (error) console.error("Błąd usuwania z grupy:", error); else renderEventDetailView(eventId);
             }
         });
     });
 }
 
-
 // --- OGÓLNE FUNKCJE UI I AUTENTYKACJI ---
 function updateUI(user) {
     if (user) {
-        authView.classList.add('hidden'); appView.classList.remove('hidden'); logoutButton.classList.remove('hidden');
+        authView.classList.add('hidden');
+        appView.classList.remove('hidden');
+        logoutButton.classList.remove('hidden');
         switchTab('members-view');
     } else {
-        authView.classList.add('hidden'); appView.classList.add('hidden'); logoutButton.classList.add('hidden');
+        // TA JEDNA LINIJKA BYŁA BŁĘDNA:
+        authView.classList.remove('hidden'); // POPRAWKA: usuwamy klasę 'hidden', aby POKAZAĆ logowanie
+        appView.classList.add('hidden');
+        logoutButton.classList.add('hidden');
     }
 }
 
 function init() {
-    // Wszystkie event listenery są podpinane tutaj, aby uniknąć błędów
     logoutButton.addEventListener('click', async () => { await supabaseClient.auth.signOut(); updateUI(null); });
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email: email.value, password: password.value });
-        if (error) errorMessage.textContent = 'Nieprawidłowy email lub hasło.';
-        else { errorMessage.textContent = ''; updateUI(data.user); }
+        if (error) { errorMessage.textContent = 'Nieprawidłowy email lub hasło.'; } else { errorMessage.textContent = ''; updateUI(data.user); }
     });
     tabs.forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
     addPlayerForm.addEventListener('submit', async (e) => {
