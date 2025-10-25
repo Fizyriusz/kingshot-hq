@@ -19,6 +19,11 @@ const addEventForm = document.getElementById('add-event-form');
 const eventNameInput = document.getElementById('event-name-input');
 const eventsListContainer = document.getElementById('events-list-container');
 
+// NOWE ELEMENTY DLA DODAWANIA HURTOWEGO
+const bulkAddPlayersForm = document.getElementById('bulk-add-players-form');
+const bulkPlayersInput = document.getElementById('bulk-players-input');
+
+
 // === KROK 3: GŁÓWNA LOGIKA APLIKACJI ===
 
 function switchTab(tabId) {
@@ -68,7 +73,7 @@ async function renderEventDetailView(eventId) {
     event.groups.forEach(group => {
         const membersInThisGroupIds = group.group_members.map(gm => gm.players.id);
         const availablePlayers = allPlayers.filter(p => !membersInThisGroupIds.includes(p.id));
-        html += `<div class="group-card"><h3>${group.name}</h3><ul>${group.group_members.map(member => `<li>${member.players.name}<div><select class="status-select" data-member-id="${member.id}"><option value="Nieokreślony" ${member.status === 'Nieokreślony' ? 'selected' : ''}>Nieokreślony</option><option value="Aktywny" ${member.status === 'Aktywny' ? 'selected' : ''}>Aktywny</option><option value="Nieaktywny" ${member.status === 'Nieaktywny' ? 'selected' : ''}>Nieaktywny</option><option value="Problem" ${member.status === 'Problem' ? 'selected' : ''}>Problem</option></select><button class="remove-from-group-button" data-member-id="${member.id}">X</button></div></li>`).join('') || '<li>Brak członków.</li>'}</ul><form class="add-player-to-group-form"><input type="hidden" name="group-id" value="${group.id}"><select name="player-id" required><option value="" disabled selected>Wybierz gracza...</option>${availablePlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}</select><button type="submit">Dodaj</button></form></div>`;
+        html += `<div class="group-card"><h3>${group.name}</h3><ul>${group.group_members.map(member => `<li><span>${member.players.name}</span><div><select class="status-select" data-member-id="${member.id}"><option value="Nieokreślony" ${member.status === 'Nieokreślony' ? 'selected' : ''}>Nieokreślony</option><option value="Aktywny" ${member.status === 'Aktywny' ? 'selected' : ''}>Aktywny</option><option value="Nieaktywny" ${member.status === 'Nieaktywny' ? 'selected' : ''}>Nieaktywny</option><option value="Problem" ${member.status === 'Problem' ? 'selected' : ''}>Problem</option></select><button class="remove-from-group-button" data-member-id="${member.id}">X</button></div></li>`).join('') || '<li>Brak członków.</li>'}</ul><form class="add-player-to-group-form"><input type="hidden" name="group-id" value="${group.id}"><select name="player-id" required><option value="" disabled selected>Wybierz gracza...</option>${availablePlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}</select><button type="submit">Dodaj</button></form></div>`;
     });
     html += `</div>`;
     eventsListContainer.innerHTML = html;
@@ -115,8 +120,7 @@ function updateUI(user) {
         logoutButton.classList.remove('hidden');
         switchTab('members-view');
     } else {
-        // TA JEDNA LINIJKA BYŁA BŁĘDNA:
-        authView.classList.remove('hidden'); // POPRAWKA: usuwamy klasę 'hidden', aby POKAZAĆ logowanie
+        authView.classList.remove('hidden');
         appView.classList.add('hidden');
         logoutButton.classList.add('hidden');
     }
@@ -135,6 +139,37 @@ function init() {
         const { error } = await supabaseClient.from('players').insert({ name: newName });
         if (error) alert(`Nie udało się dodać gracza.`); else { playerNameInput.value = ''; renderMembersView(); }
     });
+    
+    // NOWA LOGIKA DLA DODAWANIA HURTOWEGO
+    bulkAddPlayersForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const namesText = bulkPlayersInput.value.trim();
+        if (!namesText) return;
+
+        // 1. Przetwórz tekst na tablicę obiektów
+        const playersArray = namesText
+            .split('\n') // Podziel po nowych liniach
+            .map(name => name.trim()) // Usuń białe znaki
+            .filter(name => name.length > 0) // Usuń puste linie
+            .map(name => ({ name: name })); // Zmień na format { name: "Nazwa" }
+
+        if (playersArray.length === 0) return;
+
+        // 2. Wstaw wszystkich naraz do bazy
+        const { error } = await supabaseClient
+            .from('players')
+            .insert(playersArray);
+
+        if (error) {
+            console.error("Błąd dodawania hurtowego:", error);
+            alert(`Nie udało się dodać graczy. Błąd: ${error.message}\n\n(Prawdopodobnie któryś z graczy już istnieje na liście)`);
+        } else {
+            bulkPlayersInput.value = ''; // Wyczyść pole
+            renderMembersView(); // Odśwież listę
+            alert(`Pomyślnie dodano ${playersArray.length} graczy!`);
+        }
+    });
+
     playersListContainer.addEventListener('click', async (e) => {
         if (e.target.classList.contains('delete-player-button')) {
             const playerId = e.target.dataset.playerId; const playerName = e.target.dataset.playerName;

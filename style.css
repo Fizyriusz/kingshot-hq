@@ -47,7 +47,7 @@ button:hover {
     margin-top: 10px;
 }
 
-/* NOWE STYLE DLA ZAKŁADEK */
+/* Style dla zakładek */
 nav#tab-nav {
     margin-bottom: 20px;
     border-bottom: 1px solid #4f545c;
@@ -69,7 +69,7 @@ nav#tab-nav button.active-tab {
 }
 
 /* Style dla kart i list */
-.group-card, .player-item {
+.group-card, .player-item, .event-item {
     background-color: #23272a;
     border: 1px solid #99aab5;
     border-radius: 8px;
@@ -83,4 +83,63 @@ nav#tab-nav button.active-tab {
 }
 .player-item button {
     background-color: #f04747;
+}
+.event-item {
+    cursor: pointer;
+    font-weight: bold;
+}
+.event-item:hover {
+    border-color: #7289da;
+}
+
+/* NOWE STYLE DLA DODAWANIA HURTOWEGO */
+textarea {
+    width: 100%;
+    box-sizing: border-box; 
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #7289da;
+    font-size: 1em;
+    background-color: #2c2f33;
+    color: #ffffff;
+    min-height: 80px; 
+}
+
+form#bulk-add-players-form {
+    flex-direction: column; /* Układaj textarea i przycisk pionowo */
+}
+
+hr.divider {
+    border: none;
+    border-top: 1px solid #4f545c;
+    margin: 25px 0;
+}
+
+/* Style dla widoku szczegółów eventu */
+.group-card li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+}
+.group-card ul {
+    list-style: none;
+    padding-left: 0;
+}
+.remove-from-group-button {
+    background-color: #f04747;
+    border: none;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    margin-left: 10px;
+}
+.event-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }

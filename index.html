@@ -35,24 +35,32 @@
             <div id="tab-content">
 
                 <section id="members-view" class="tab-pane active">
-                    <h3>Zarządzanie Członkami Sojuszu</h3>
+                    <h3>Dodaj Pojedynczego Członka</h3>
                     <form id="add-player-form">
                         <input type="text" id="player-name-input" placeholder="Nazwa nowego gracza" required>
                         <button type="submit">Dodaj do Sojuszu</button>
                     </form>
+
+                    <hr class="divider"> <h3>Dodawanie Hurtowe</h3>
+                    <form id="bulk-add-players-form">
+                        <textarea id="bulk-players-input" placeholder="Wklej listę graczy, każdy w nowej linii..." rows="5"></textarea>
+                        <button type="submit">Dodaj wszystkich z listy</button>
+                    </form>
+                    
+                    <hr class="divider"> <h3>Aktywni Członkowie</h3>
                     <div id="players-list-container">
                         </div>
                 </section>
 
-<section id="events-view" class="tab-pane hidden">
-    <h3>Zarządzanie Eventami</h3>
-    <form id="add-event-form">
-        <input type="text" id="event-name-input" placeholder="Nazwa nowego eventu" required>
-        <button type="submit">Stwórz Event</button>
-    </form>
-    <div id="events-list-container">
-        </div>
-</section>
+                <section id="events-view" class="tab-pane hidden">
+                    <h3>Zarządzanie Eventami</h3>
+                    <form id="add-event-form">
+                        <input type="text" id="event-name-input" placeholder="Nazwa nowego eventu" required>
+                        <button type="submit">Stwórz Event</button>
+                    </form>
+                    <div id="events-list-container">
+                        </div>
+                </section>
 
             </div>
         </div>
