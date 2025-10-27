@@ -3,24 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kingshot HQ v2.0</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Kingshot HQ</title> <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
     <header>
-        <h1>Kingshot HQ - Centrum Dowodzenia</h1>
-        <button id="logout-button" class="hidden">Wyloguj</button>
+        <h1 data-translate-key="appTitle">Kingshot HQ - Centrum Dowodzenia</h1>
+        <div id="lang-switcher">
+            <button data-lang="pl" class="active-lang">PL</button>
+            <button data-lang="en">EN</button>
+        </div>
+        <button id="logout-button" class="hidden" data-translate-key="logout">Wyloguj</button>
     </header>
 
     <main>
         <div id="auth-view">
-            <h2>Logowanie</h2>
+            <h2 data-translate-key="loginTitle">Logowanie</h2>
             <form id="login-form">
                 <input type="email" id="email" placeholder="Email" required>
                 <input type="password" id="password" placeholder="Hasło" required>
-                <button type="submit">Zaloguj</button>
+                <button type="submit" data-translate-key="loginButton">Zaloguj</button>
             </form>
             <p id="error-message" class="error"></p>
         </div>
@@ -28,38 +31,58 @@
         <div id="app-view" class="hidden">
             
             <nav id="tab-nav">
-                <button data-tab="members-view" class="active-tab">Członkowie</button>
-                <button data-tab="events-view">Eventy</button>
+                <button data-tab="members-view" class="active-tab" data-translate-key="tabMembers">Członkowie</button>
+                <button data-tab="events-view" data-translate-key="tabEvents">Eventy</button>
+                <button data-tab="snapshots-view" data-translate-key="tabSnapshots">Snapshoty</button>
             </nav>
 
             <div id="tab-content">
 
                 <section id="members-view" class="tab-pane active">
-                    <h3>Dodaj Pojedynczego Członka</h3>
+                    <h3 data-translate-key="addSingleMember">Dodaj Pojedynczego Członka</h3>
                     <form id="add-player-form">
-                        <input type="text" id="player-name-input" placeholder="Nazwa nowego gracza" required>
-                        <button type="submit">Dodaj do Sojuszu</button>
+                        <input type="text" id="player-name-input" placeholder="Nazwa..." required>
+                        <input type="number" id="player-th-input" placeholder="TH..." min="1">
+                        <input type="text" id="player-power-input" placeholder="Power...">
+                        <select id="player-marches-input">
+                            <option value="" selected data-translate-key="marchesPlaceholder">Marsze?</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                        </select>
+                        <button type="submit" data-translate-key="addButton">Dodaj</button>
                     </form>
-
-                    <hr class="divider"> <h3>Dodawanie Hurtowe</h3>
+                    <hr class="divider">
+                    <h3 data-translate-key="bulkAdd">Dodawanie Hurtowe</h3>
                     <form id="bulk-add-players-form">
-                        <textarea id="bulk-players-input" placeholder="Wklej listę graczy, każdy w nowej linii..." rows="5"></textarea>
-                        <button type="submit">Dodaj wszystkich z listy</button>
+                        <textarea id="bulk-players-input" placeholder="Wklej listę..." rows="5"></textarea>
+                        <button type="submit" data-translate-key="addAllButton">Dodaj wszystkich z listy</button>
                     </form>
-                    
-                    <hr class="divider"> <h3>Aktywni Członkowie</h3>
-                    <div id="players-list-container">
-                        </div>
+                    <hr class="divider">
+                    <div class="view-toggle-container">
+                        <label for="show-inactive-toggle" data-translate-key="showInactive">Pokaż nieaktywnych</label>
+                        <input type="checkbox" id="show-inactive-toggle">
+                    </div>
+                    <h3 id="members-list-header" data-translate-key="activeMembers">Aktywni Członkowie</h3>
+                    <div id="players-list-container"></div>
                 </section>
 
                 <section id="events-view" class="tab-pane hidden">
-                    <h3>Zarządzanie Eventami</h3>
+                    <h3 data-translate-key="manageEvents">Zarządzanie Eventami</h3>
                     <form id="add-event-form">
                         <input type="text" id="event-name-input" placeholder="Nazwa nowego eventu" required>
-                        <button type="submit">Stwórz Event</button>
+                        <button type="submit" data-translate-key="createEventButton">Stwórz Event</button>
                     </form>
-                    <div id="events-list-container">
-                        </div>
+                    <div id="events-list-container"></div>
+                </section>
+                
+                <section id="snapshots-view" class="tab-pane hidden">
+                    <h3 data-translate-key="manageSnapshots">Zarządzanie Snapshotami</h3>
+                    <p data-translate-key="snapshotDescription">Snapshot zapisuje aktualny stan (TH, Power, Marsze) wszystkich **aktywnych** graczy...</p>
+                    <button id="create-snapshot-button" class="button-large" data-translate-key="createSnapshotButton">Stwórz nowy snapshot</button>
+                    <hr class="divider">
+                    <h3 data-translate-key="snapshotHistory">Historia Snapshotów</h3>
+                    <div id="snapshots-list-container"></div>
                 </section>
 
             </div>
