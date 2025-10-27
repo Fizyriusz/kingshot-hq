@@ -29,65 +29,91 @@
         </div>
 
         <div id="app-view" class="hidden">
-            
-            <nav id="tab-nav">
-                <button data-tab="members-view" class="active-tab" data-translate-key="tabMembers">Członkowie</button>
-                <button data-tab="events-view" data-translate-key="tabEvents">Eventy</button>
-                <button data-tab="snapshots-view" data-translate-key="tabSnapshots">Snapshoty</button>
-            </nav>
-
-            <div id="tab-content">
-
-                <section id="members-view" class="tab-pane active">
-                    <h3 data-translate-key="addSingleMember">Dodaj Pojedynczego Członka</h3>
-                    <form id="add-player-form">
-                        <input type="text" id="player-name-input" placeholder="Nazwa..." required>
-                        <input type="number" id="player-th-input" placeholder="TH..." min="1">
-                        <input type="text" id="player-power-input" placeholder="Power...">
-                        <select id="player-marches-input">
-                            <option value="" selected data-translate-key="marchesPlaceholder">Marsze?</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                        </select>
-                        <button type="submit" data-translate-key="addButton">Dodaj</button>
-                    </form>
-                    <hr class="divider">
-                    <h3 data-translate-key="bulkAdd">Dodawanie Hurtowe</h3>
-                    <form id="bulk-add-players-form">
-                        <textarea id="bulk-players-input" placeholder="Wklej listę..." rows="5"></textarea>
-                        <button type="submit" data-translate-key="addAllButton">Dodaj wszystkich z listy</button>
-                    </form>
-                    <hr class="divider">
-                    <div class="view-toggle-container">
-                        <label for="show-inactive-toggle" data-translate-key="showInactive">Pokaż nieaktywnych</label>
-                        <input type="checkbox" id="show-inactive-toggle">
+            <aside id="stats-sidebar">
+                <h3 data-translate-key="statisticsTitle">Statystyki</h3>
+                <div id="stats-content">
                     </div>
-                    <h3 id="members-list-header" data-translate-key="activeMembers">Aktywni Członkowie</h3>
-                    <div id="players-list-container"></div>
-                </section>
+            </aside>
 
-                <section id="events-view" class="tab-pane hidden">
-                    <h3 data-translate-key="manageEvents">Zarządzanie Eventami</h3>
-                    <form id="add-event-form">
-                        <input type="text" id="event-name-input" placeholder="Nazwa nowego eventu" required>
-                        <button type="submit" data-translate-key="createEventButton">Stwórz Event</button>
-                    </form>
-                    <div id="events-list-container"></div>
-                </section>
-                
-                <section id="snapshots-view" class="tab-pane hidden">
-                    <h3 data-translate-key="manageSnapshots">Zarządzanie Snapshotami</h3>
-                    <p data-translate-key="snapshotDescription">Snapshot zapisuje aktualny stan (TH, Power, Marsze) wszystkich **aktywnych** graczy...</p>
-                    <button id="create-snapshot-button" class="button-large" data-translate-key="createSnapshotButton">Stwórz nowy snapshot</button>
-                    <hr class="divider">
-                    <h3 data-translate-key="snapshotHistory">Historia Snapshotów</h3>
-                    <div id="snapshots-list-container"></div>
-                </section>
+            <div id="main-content">
+                <nav id="tab-nav">
+                    <button data-tab="members-view" class="active-tab" data-translate-key="tabMembers">Członkowie</button>
+                    <button data-tab="events-view" data-translate-key="tabEvents">Eventy</button>
+                    <button data-tab="snapshots-view" data-translate-key="tabSnapshots">Snapshoty</button>
+                </nav>
 
-            </div>
-        </div>
-    </main>
+                <div id="tab-content">
+
+                    <section id="members-view" class="tab-pane active">
+                        <h3 data-translate-key="addSingleMember">Dodaj Pojedynczego Członka</h3>
+                        <form id="add-player-form">
+                            <input type="text" id="player-name-input" placeholder="Nazwa..." required>
+                            <input type="number" id="player-th-input" placeholder="TH..." min="1">
+                            <input type="text" id="player-power-input" placeholder="Power...">
+                            <select id="player-marches-input">
+                                <option value="" selected data-translate-key="marchesPlaceholder">Marsze?</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                            </select>
+                            <button type="submit" data-translate-key="addButton">Dodaj</button>
+                        </form>
+                        <hr class="divider">
+                        <h3 data-translate-key="bulkAdd">Dodawanie Hurtowe</h3>
+                        <form id="bulk-add-players-form">
+                            <textarea id="bulk-players-input" placeholder="Wklej listę graczy: Nazwa, TH, Power (np. 122,8m)" rows="5"></textarea>
+                            <button type="submit" data-translate-key="addAllButton">Dodaj wszystkich z listy</button>
+                        </form>
+                        <hr class="divider">
+                        <h3 data-translate-key="bulkUpdateMarches">Hurtowa Aktualizacja Marszy</h3>
+                        <form id="bulk-update-marches-form">
+                            <textarea id="bulk-marches-input" placeholder="Wklej listę: Nazwa, Marsze (np. GraczA, 5)" rows="5"></textarea>
+                            <button type="submit" data-translate-key="updateMarchesButton">Aktualizuj Marsze</button>
+                        </form>
+                        <hr class="divider">
+                        <div class="member-filters">
+                             <label for="member-filter-name" data-translate-key="filterByName">Filtruj po nicku:</label>
+                             <input type="text" id="member-filter-name" placeholder="Wpisz nick...">
+                             <label for="member-filter-power" data-translate-key="filterByPower">Filtruj po power:</label>
+                             <input type="text" id="member-filter-power" placeholder="Wpisz moc...">
+                        </div>
+                        <div class="view-toggle-container">
+                            <label for="show-inactive-toggle" data-translate-key="showInactive">Pokaż nieaktywnych</label>
+                            <input type="checkbox" id="show-inactive-toggle">
+                        </div>
+
+                        <div class="sort-controls">
+                            <span data-translate-key="sortBy">Sortuj po:</span>
+                            <button data-sort="name" class="sort-button active-sort">Nick</button> <button data-sort="th_level" class="sort-button">TH</button>
+                            <button data-sort="power_level" class="sort-button">Power</button>
+                            <button data-sort="marches" class="sort-button">Marsze</button>
+                            <button id="sort-direction-button" data-direction="asc">🔼</button> </div>
+
+                        <h3 id="members-list-header" data-translate-key="activeMembers">Aktywni Członkowie</h3>
+                        <div id="players-list-container">
+                            </div>
+                    </section>
+
+                    <section id="events-view" class="tab-pane hidden">
+                        <h3 data-translate-key="manageEvents">Zarządzanie Eventami</h3>
+                        <form id="add-event-form">
+                            <input type="text" id="event-name-input" placeholder="Nazwa nowego eventu" required>
+                            <button type="submit" data-translate-key="createEventButton">Stwórz Event</button>
+                        </form>
+                        <div id="events-list-container">
+                            </div>
+                    </section>
+                    
+                    <section id="snapshots-view" class="tab-pane hidden">
+                        <h3 data-translate-key="manageSnapshots">Zarządzanie Snapshotami</h3>
+                        <p data-translate-key="snapshotDescription">Snapshot zapisuje aktualny stan (TH, Power, Marsze) wszystkich **aktywnych** graczy. Rób to regularnie, np. raz w tygodniu, aby śledzić postępy.</p>
+                        <button id="create-snapshot-button" class="button-large" data-translate-key="createSnapshotButton">Stwórz nowy snapshot</button>
+                        <hr class="divider">
+                        <h3 data-translate-key="snapshotHistory">Historia Snapshotów</h3>
+                        <div id="snapshots-list-container">
+                            </div>
+                    </section>
+                </div> </div> </div> </main>
 
     <script src="app.js"></script>
 </body>
