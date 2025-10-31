@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kingshot HQ</title> <link rel="stylesheet" href="style.css">
+    <title>Kingshot HQ</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -31,8 +32,7 @@
         <div id="app-view" class="hidden">
             <aside id="stats-sidebar">
                 <h3 data-translate-key="statisticsTitle">Statystyki</h3>
-                <div id="stats-content">
-                    </div>
+                <div id="stats-content"></div>
             </aside>
 
             <div id="main-content">
@@ -40,6 +40,7 @@
                     <button data-tab="members-view" class="active-tab" data-translate-key="tabMembers">Członkowie</button>
                     <button data-tab="events-view" data-translate-key="tabEvents">Eventy</button>
                     <button data-tab="snapshots-view" data-translate-key="tabSnapshots">Snapshoty</button>
+                    <button data-tab="kvk-view" data-translate-key="tabKvk">Skład KvK</button>
                 </nav>
 
                 <div id="tab-content">
@@ -59,17 +60,12 @@
                             <button type="submit" data-translate-key="addButton">Dodaj</button>
                         </form>
                         <hr class="divider">
-                        <h3 data-translate-key="bulkAdd">Dodawanie Hurtowe</h3>
-                        <form id="bulk-add-players-form">
-                            <textarea id="bulk-players-input" placeholder="Wklej listę graczy: Nazwa, TH, Power (np. 122,8m)" rows="5"></textarea>
-                            <button type="submit" data-translate-key="addAllButton">Dodaj wszystkich z listy</button>
+                        <h3 data-translate-key="syncToolTitle">Narzędzie Synchronizacji Sojuszu</h3>
+                        <form id="sync-players-form">
+                            <textarea id="sync-players-input" placeholder="Wklej pełną listę graczy: Nazwa, TH, Power (np. 122,8m)" rows="10"></textarea>
+                            <button type="submit" data-translate-key="analyzeButton">Analizuj listę</button>
                         </form>
-                        <hr class="divider">
-                        <h3 data-translate-key="bulkUpdateMarches">Hurtowa Aktualizacja Marszy</h3>
-                        <form id="bulk-update-marches-form">
-                            <textarea id="bulk-marches-input" placeholder="Wklej listę: Nazwa, Marsze (np. GraczA, 5)" rows="5"></textarea>
-                            <button type="submit" data-translate-key="updateMarchesButton">Aktualizuj Marsze</button>
-                        </form>
+                        <div id="sync-results-container"></div>
                         <hr class="divider">
                         <div class="member-filters">
                              <label for="member-filter-name" data-translate-key="filterByName">Filtruj po nicku:</label>
@@ -81,17 +77,16 @@
                             <label for="show-inactive-toggle" data-translate-key="showInactive">Pokaż nieaktywnych</label>
                             <input type="checkbox" id="show-inactive-toggle">
                         </div>
-
                         <div class="sort-controls">
                             <span data-translate-key="sortBy">Sortuj po:</span>
-                            <button data-sort="name" class="sort-button active-sort">Nick</button> <button data-sort="th_level" class="sort-button">TH</button>
-                            <button data-sort="power_level" class="sort-button">Power</button>
-                            <button data-sort="marches" class="sort-button">Marsze</button>
-                            <button id="sort-direction-button" data-direction="asc">🔼</button> </div>
-
+                            <button data-sort="name" class="sort-button active-sort" data-translate-key="sortName">Nick</button>
+                            <button data-sort="th_level" class="sort-button" data-translate-key="sortTH">TH</button>
+                            <button data-sort="power_level" class="sort-button" data-translate-key="sortPower">Power</button>
+                            <button data-sort="marches" class="sort-button" data-translate-key="sortMarches">Marsze</button>
+                            <button id="sort-direction-button" data-direction="asc">🔼</button>
+                        </div>
                         <h3 id="members-list-header" data-translate-key="activeMembers">Aktywni Członkowie</h3>
-                        <div id="players-list-container">
-                            </div>
+                        <div id="players-list-container"></div>
                     </section>
 
                     <section id="events-view" class="tab-pane hidden">
@@ -100,19 +95,30 @@
                             <input type="text" id="event-name-input" placeholder="Nazwa nowego eventu" required>
                             <button type="submit" data-translate-key="createEventButton">Stwórz Event</button>
                         </form>
-                        <div id="events-list-container">
-                            </div>
+                        <div id="events-list-container"></div>
                     </section>
                     
                     <section id="snapshots-view" class="tab-pane hidden">
                         <h3 data-translate-key="manageSnapshots">Zarządzanie Snapshotami</h3>
-                        <p data-translate-key="snapshotDescription">Snapshot zapisuje aktualny stan (TH, Power, Marsze) wszystkich **aktywnych** graczy. Rób to regularnie, np. raz w tygodniu, aby śledzić postępy.</p>
+                        <p data-translate-key="snapshotDescription">Snapshot zapisuje aktualny stan...</p>
                         <button id="create-snapshot-button" class="button-large" data-translate-key="createSnapshotButton">Stwórz nowy snapshot</button>
                         <hr class="divider">
                         <h3 data-translate-key="snapshotHistory">Historia Snapshotów</h3>
-                        <div id="snapshots-list-container">
+                        <div id="snapshots-list-container"></div>
+                    </section>
+                    
+                    <section id="kvk-view" class="tab-pane hidden">
+                        <h3 data-translate-key="kvkTitle">Generator Składu KvK</h3>
+                        <form id="create-kvk-event-form">
+                            <input type="text" id="kvk-event-name-input" placeholder="Nazwa eventu KvK (np. KvK #1)" required>
+                            <input type="date" id="kvk-event-date-input">
+                            <button type="submit" data-translate-key="createKvkEventButton">Stwórz Event KvK</button>
+                        </form>
+                        <hr class="divider">
+                        <div id="kvk-content-container">
                             </div>
                     </section>
+
                 </div> </div> </div> </main>
 
     <script src="app.js"></script>
