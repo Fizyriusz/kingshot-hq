@@ -132,7 +132,9 @@ const translations = {
         kvkParticipantRemoveError: "Błąd usuwania uczestnika.",
         kvkNotesUpdateError: "Błąd aktualizacji notatek.",
         searchPlayerPlaceholder: "Wpisz nick, aby wyszukać...",
-        playerNotFound: "Nie znaleziono gracza o tym nicku na liście dostępnych."
+        playerNotFound: "Nie znaleziono gracza o tym nicku na liście dostępnych.",
+        // NOWE TŁUMACZENIA
+        notesLabel: "Notatki"
     },
     en: {
         appTitle: "Kingshot HQ - Command Center",
@@ -260,7 +262,9 @@ const translations = {
         kvkParticipantRemoveError: "Error removing participant.",
         kvkNotesUpdateError: "Error updating notes.",
         searchPlayerPlaceholder: "Type name to search...",
-        playerNotFound: "Player with this name not found in the available list."
+        playerNotFound: "Player with this name not found in the available list.",
+        // NOWE TŁUMACZENIA
+        notesLabel: "Notes"
     }
 };
 
@@ -290,7 +294,6 @@ function applyStaticTranslations() {
     const syncInput = document.getElementById('sync-players-input');
     if (syncInput) { syncInput.placeholder = t('syncToolPlaceholder'); }
     
-    // POPRAWKA: Użyj ID sekcji, aby poprawnie wybrać kontenery sortowania
     const memberSortControls = document.querySelector('#members-view .sort-controls');
     if (memberSortControls) {
         memberSortControls.querySelector('.sort-button[data-sort="name"]').textContent = t('sortName');
@@ -337,7 +340,7 @@ const snapshotsListContainer = document.getElementById('snapshots-list-container
 const memberFilterNameInput = document.getElementById('member-filter-name');
 const memberFilterPowerInput = document.getElementById('member-filter-power');
 const statsContent = document.getElementById('stats-content');
-const memberSortControlsContainer = document.querySelector('#members-view .sort-controls'); // POPRAWIONY SELEKTOR
+const memberSortControlsContainer = document.querySelector('#members-view .sort-controls');
 const sortDirectionButton = document.getElementById('sort-direction-button');
 const syncPlayersForm = document.getElementById('sync-players-form');
 const syncPlayersInput = document.getElementById('sync-players-input');
@@ -559,7 +562,7 @@ async function handleSyncExecute(e) {
 // --- ZAKŁADKA "EVENTY" ---
 async function renderEventsListView() {
     addEventForm.classList.remove('hidden');
-    kvkContentContainer.innerHTML = ''; // Wyczyść KvK
+    kvkContentContainer.innerHTML = '';
     const { data: events, error } = await supabaseClient.from('events').select('*').order('created_at', { ascending: false });
     if (error) { console.error("Błąd pobierania eventów:", error); return; }
     eventsListContainer.innerHTML = events.map(event => `
@@ -621,7 +624,6 @@ function attachDetailViewListeners(eventId) {
     document.getElementById('filter-power').addEventListener('input', (e) => { eventDetailFilters.power = e.target.value; renderEventDetailView(eventId); });
     document.querySelectorAll('.edit-group-name-button').forEach(button => { button.addEventListener('click', async (e) => { const groupId = button.dataset.groupId; const currentName = button.dataset.groupName; const newName = prompt(t('renameGroupPrompt'), currentName); if (newName && newName.trim() !== '' && newName !== currentName) { const { error } = await supabaseClient.from('groups').update({ name: newName.trim() }).eq('id', groupId); if (error) alert(t('groupRenameError')); else renderEventDetailView(eventId); } }); });
     
-    // ZMIANA: Logika formularza dodawania gracza
     document.querySelectorAll('.add-player-to-group-form').forEach(form => {
         const availablePlayers = JSON.parse(form.dataset.filteredPlayers || '[]');
         form.addEventListener('submit', async (e) => {
@@ -648,11 +650,11 @@ function attachDetailViewListeners(eventId) {
 async function renderSnapshotsView() { createSnapshotButton.classList.remove('hidden'); kvkContentContainer.innerHTML = ''; const { data, error } = await supabaseClient.from('player_snapshots').select('snapshot_date').order('snapshot_date', { ascending: false }); if (error) { console.error(t('loadingError'), error); snapshotsListContainer.innerHTML = `<p class="error">${t('loadingError')}</p>`; return; } const uniqueDates = [...new Set(data.map(item => item.snapshot_date))]; if (uniqueDates.length === 0) { snapshotsListContainer.innerHTML = `<p>${t('noHistory')}</p>`; } else { snapshotsListContainer.innerHTML = uniqueDates.map(date => `<div class="snapshot-item" data-date="${date}">${t('snapshotFromDate')} ${new Date(date).toLocaleDateString(currentLang)}</div>`).join(''); } }
 async function renderSnapshotDetailView(date) { createSnapshotButton.classList.add('hidden'); const { data: snapshotData, error } = await supabaseClient.from('player_snapshots').select('*').eq('snapshot_date', date).order('player_name', { ascending: true }); if (error) { console.error(t('loadingError'), error); snapshotsListContainer.innerHTML = `<p class="error">${t('loadingError')}</p>`; return; } const formattedDate = new Date(date).toLocaleDateString(currentLang); let html = `<div class="event-detail-header"><h2>${t('snapshotDetailTitle', formattedDate)}</h2><button id="back-to-snapshots-list">${t('backToList')}</button></div>`; html += snapshotData.map(player => ` <div class="player-item"> <span class="player-name">${player.player_name}</span> <div class="player-details"> <span>${t('thLabel')}: <strong>${player.th_level || '?'}</strong></span> <span>${t('powerLabel')}: <strong>${player.power_level || '?'}</strong></span> <span>${t('marchesLabel')}: <strong>${player.marches || '?'}</strong></span> </div> </div> `).join(''); snapshotsListContainer.innerHTML = html; document.getElementById('back-to-snapshots-list').addEventListener('click', renderSnapshotsView); }
 
-// --- ZAKŁADKA "KVK ROSTER" (ZAKTUALIZOWANA) ---
+// --- ZAKŁADKA "KVK ROSTER" ---
 
 async function renderKvkEventsList() {
     createKvkEventForm.classList.remove('hidden');
-    eventsListContainer.innerHTML = ''; // Wyczyść Eventy
+    eventsListContainer.innerHTML = '';
     const { data, error } = await supabaseClient.from('kvk_events').select('*').order('created_at', { ascending: false });
     if (error) { console.error(t('loadingError'), error); kvkContentContainer.innerHTML = `<p class="error">${t('loadingError')}</p>`; return; }
     
@@ -731,6 +733,9 @@ async function renderKvkDetailView(kvkEventId, kvkEventName) {
                 <div class="kvk-participant-item">
                     <span class="player-name">${p.players.name}</span>
                     <div class="player-details">
+                        <span>${t('powerLabel')}: <strong data-label="power">${p.players.power_level || '?'}</strong></span>
+                        <span>${t('thLabel')}: <strong data-label="th">${p.players.th_level || '?'}</strong></span>
+                        <span>${t('marchesLabel')}: <strong data-label="marches">${p.players.marches || '?'}</strong></span>
                         <input 
                             type="text" 
                             class="kvk-notes-input" 
@@ -754,7 +759,6 @@ async function renderKvkDetailView(kvkEventId, kvkEventName) {
 function attachKvkDetailListeners(kvkEventId, kvkEventName) {
     document.getElementById('back-to-kvk-list').addEventListener('click', renderKvkEventsList);
 
-    // ZMIANA: Logika formularza dodawania gracza KvK
     const addForm = document.getElementById('kvk-add-player-form');
     const availablePlayers = JSON.parse(addForm.dataset.availablePlayers || '[]');
     addForm.addEventListener('submit', async (e) => {
@@ -770,7 +774,6 @@ function attachKvkDetailListeners(kvkEventId, kvkEventName) {
         else { renderKvkDetailView(kvkEventId, kvkEventName); }
     });
     
-    // Sortowanie
     document.querySelector('.kvk-sort-controls').addEventListener('click', (e) => {
         const target = e.target;
         if (target.classList.contains('sort-button')) {
@@ -785,18 +788,30 @@ function attachKvkDetailListeners(kvkEventId, kvkEventName) {
         }
     });
     
-    // Generowanie pliku
+    // ZAKTUALIZOWANA LOGIKA GENEROWANIA PLIKU
     document.getElementById('generate-kvk-file-btn').addEventListener('click', () => {
         const participants = document.querySelectorAll('#kvk-participant-list .kvk-participant-item');
         if (participants.length === 0) { alert(t('noPlayersSelected')); return; }
+        
         let fileContent = `${t('generatedFileHeader', kvkEventName)} (${participants.length})\n===================================\n\n`;
+        
         participants.forEach((item, index) => {
             const name = item.querySelector('.player-name').textContent;
+            // Poprawne pobieranie danych ze znaczników <strong>
+            const power = item.querySelector('[data-label="power"]').textContent;
+            const th = item.querySelector('[data-label="th"]').textContent;
+            const marches = item.querySelector('[data-label="marches"]').textContent;
             const notes = item.querySelector('.kvk-notes-input').value.trim();
-            // Pobierz dane z listy (mniej eleganckie, ale działa bez przechowywania ich w DOM)
-            const participantData = participants[index]; 
-            fileContent += `${index + 1}. ${name}${notes ? ` - Notatki: ${notes}` : ''}\n`;
+            
+            // Formatowanie pliku
+            fileContent += `${index + 1}. ${name}\n`;
+            fileContent += `   ${t('powerLabel')}: ${power}, ${t('thLabel')}: ${th}, ${t('marchesLabel')}: ${marches}\n`;
+            if (notes) {
+                fileContent += `   ${t('notesLabel')}: ${notes}\n`;
+            }
+            fileContent += `\n`; // Pusta linia dla czytelności
         });
+        
         const element = document.createElement('a');
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(fileContent));
         element.setAttribute('download', `kvk_roster_${kvkEventName.replace(/ /g, '_')}.txt`);
@@ -806,7 +821,6 @@ function attachKvkDetailListeners(kvkEventId, kvkEventName) {
         document.body.removeChild(element);
     });
 
-    // Delegowane listenery
     const participantList = document.getElementById('kvk-participant-list');
     participantList.addEventListener('click', async (e) => {
         if (e.target.classList.contains('remove-from-kvk-button')) {
@@ -818,7 +832,7 @@ function attachKvkDetailListeners(kvkEventId, kvkEventName) {
             }
         }
     });
-    participantList.addEventListener('change', async (e) => { // 'change' zapisuje po utracie focusa (lepsze niż 'input')
+    participantList.addEventListener('change', async (e) => {
         if (e.target.classList.contains('kvk-notes-input')) {
             const participantId = e.target.dataset.participantId;
             const newNotes = e.target.value;
