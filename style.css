@@ -323,7 +323,66 @@ hr.divider {
     background-color: #218838;
 }
 
-/* Style dla widoku szczegółów eventu */
+/* NOWE STYLE DLA WIDOKU SZCZEGÓŁÓW EVENTU */
+#event-detail-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+#event-available-players {
+    background-color: #232a;
+    border-radius: 8px;
+    padding: 15px;
+}
+#event-groups-column {
+    /* (pozostaje bez zmian) */
+}
+/* Lista dostępnych graczy */
+#event-available-player-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.available-player-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 5px;
+    border-radius: 4px;
+}
+.available-player-item:nth-child(odd) {
+    background-color: #2c2f33;
+}
+.available-player-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+}
+.available-player-item .player-info {
+    font-size: 0.9em;
+    color: #ddd;
+}
+.available-player-item .player-name {
+    font-weight: bold;
+    color: white;
+}
+.add-selected-to-group-btn {
+    width: 100%;
+    background-color: #28a745;
+    font-size: 0.9em;
+    padding: 8px;
+    margin-top: 10px;
+}
+.add-selected-to-group-btn:hover {
+    background-color: #218838;
+}
+
+/* Układ 2-kolumnowy dla PC w widoku eventu */
+@media (min-width: 992px) {
+    #event-detail-layout {
+        grid-template-columns: 40% 1fr; /* 40% dla dostępnych, reszta dla grup */
+    }
+}
+
 .group-card h3 {
     display: flex;
     justify-content: space-between;
@@ -349,11 +408,9 @@ hr.divider {
     list-style: none;
     padding-left: 0;
 }
-/* NOWY STYL DLA POLA WYSZUKIWANIA */
 .player-search-input {
-    flex-grow: 1; /* Niech pole zajmie większość miejsca */
+    flex-grow: 1;
 }
-
 .remove-from-group-button {
     background-color: #f04747;
     border: none;
@@ -371,6 +428,7 @@ hr.divider {
     align-items: center;
     margin-bottom: 20px;
 }
+/* Zastosuj player-filters również do event-available-players */
 .player-filters {
     background-color: #232a;
     padding: 10px;
@@ -436,7 +494,7 @@ hr.divider {
     background-color: #7289da;
     color: white;
 }
-#sort-direction-button, #kvk-sort-direction-button {
+#sort-direction-button, #kvk-sort-direction-button, #event-sort-direction-button {
     background: none;
     border: none;
     font-size: 1.2em;
@@ -491,7 +549,14 @@ hr.divider {
     background-color: #f04747;
     flex-shrink: 0;
 }
-/* Zastosuj styl wyszukiwania również do formularza dodawania w KVK */
 #kvk-add-player-form .player-search-input {
     flex-grow: 1;
+}
+
+/* Przycisk historii gracza */
+.player-item .history-player-button {
+    background-color: #4f545c;
+    flex-shrink: 0;
+    padding: 5px 8px;
+    font-size: 0.9em;
 }
