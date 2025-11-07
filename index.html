@@ -40,7 +40,6 @@
                     <button data-tab="members-view" class="active-tab" data-translate-key="tabMembers">Członkowie</button>
                     <button data-tab="events-view" data-translate-key="tabEvents">Eventy</button>
                     <button data-tab="snapshots-view" data-translate-key="tabSnapshots">Snapshoty</button>
-                    <button data-tab="kvk-view" data-translate-key="tabKvk">Skład KvK</button>
                 </nav>
 
                 <div id="tab-content">
@@ -95,7 +94,8 @@
                             <input type="text" id="event-name-input" placeholder="Nazwa nowego eventu" required>
                             <button type="submit" data-translate-key="createEventButton">Stwórz Event</button>
                         </form>
-                        <div id="events-list-container"></div>
+                        <div id="events-list-container">
+                            </div>
                     </section>
                     
                     <section id="snapshots-view" class="tab-pane hidden">
@@ -107,20 +107,8 @@
                         <div id="snapshots-list-container"></div>
                     </section>
                     
-                    <section id="kvk-view" class="tab-pane hidden">
-                        <h3 data-translate-key="kvkTitle">Generator Składu KvK</h3>
-                        <form id="create-kvk-event-form">
-                            <input type="text" id="kvk-event-name-input" placeholder="Nazwa eventu KvK (np. KvK #1)" required>
-                            <input type="date" id="kvk-event-date-input">
-                            <button type="submit" data-translate-key="createKvkEventButton">Stwórz Event KvK</button>
-                        </form>
-                        <hr class="divider">
-                        <div id="kvk-content-container">
-                            </div>
-                    </section>
+                    </div> </div> </div> </main>
 
-                </div> </div> </div> </main>
-
-<script type="module" src="main.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>

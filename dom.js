@@ -29,11 +29,9 @@ export const sortDirectionButton = document.getElementById('sort-direction-butto
 export const syncPlayersForm = document.getElementById('sync-players-form');
 export const syncPlayersInput = document.getElementById('sync-players-input');
 export const syncResultsContainer = document.getElementById('sync-results-container');
-export const kvkView = document.getElementById('kvk-view');
-export const kvkContentContainer = document.getElementById('kvk-content-container');
-export const createKvkEventForm = document.getElementById('create-kvk-event-form');
-export const kvkEventNameInput = document.getElementById('kvk-event-name-input');
-export const kvkEventDateInput = document.getElementById('kvk-event-date-input');
+
+// Usunięto elementy KvK
+
 export const memberControls = [
     document.querySelector('.member-filters'),
     document.querySelector('.view-toggle-container'),

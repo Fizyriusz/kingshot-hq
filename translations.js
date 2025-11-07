@@ -106,34 +106,18 @@ export const translations = {
         syncAnalyzing: "Analizowanie... Proszę czekać.",
         renamePlayer: "Zmień nick na:",
         noNewPlayersToMap: "Brak nowych graczy do mapowania.",
-        tabKvkRoster: "Skład KvK", // Poprawiony klucz
-        kvkTitle: "Zarządzanie Składem KvK",
-        kvkListIntro: "Zarządzaj listą uczestników KvK.",
-        generateFileBtn: "Generuj Plik Tekstowy",
-        generatedFileHeader: (name) => `Skład KvK: ${name}`,
-        noPlayersSelected: "Nie zaznaczono żadnych graczy.",
-        createKvkEventButton: "Stwórz Event KvK",
-        kvkEventNamePlaceholder: "Nazwa eventu KvK (np. KvK #1)",
-        kvkEventDateLabel: "Data Eventu (opcjonalnie):",
-        kvkEventListTitle: "Wybierz Event KvK",
-        manageKvkEventTitle: (name) => `Zarządzanie Składem: ${name}`,
-        addPlayersToKvk: "Dodaj Graczy do Składu",
-        kvkParticipants: "Uczestnicy",
-        kvkNotesPlaceholder: "Notatki dla tego gracza...",
-        kvkRemoveParticipant: "Usuń ze składu",
-        kvkRemoveParticipantConfirm: "Na pewno usunąć gracza ze składu KvK?",
-        kvkParticipantAddError: "Błąd dodawania uczestnika.",
-        kvkParticipantRemoveError: "Błąd usuwania uczestnika.",
-        kvkNotesUpdateError: "Błąd aktualizacji notatek.",
         searchPlayerPlaceholder: "Wpisz nick, aby wyszukać...",
         playerNotFound: "Nie znaleziono gracza o tym nicku na liście dostępnych.",
         notesLabel: "Notatki",
-        // NOWE TŁUMACZENIA DLA HISTORII GRACZA
         historyButton: "Historia",
         historyForPlayer: (name) => `Historia Postępów: ${name}`,
         backToMembers: "Wróć do listy członków",
         noHistoryForPlayer: "Brak zapisanej historii snapshotów dla tego gracza.",
-        snapshotDate: "Data"
+        snapshotDate: "Data",
+        // NOWE TŁUMACZENIA DLA EVENTÓW
+        availablePlayers: "Dostępni Gracze",
+        addSelectedToGroup: "Dodaj zaznaczonych do grupy",
+        noPlayersSelected: "Nie zaznaczono żadnych graczy."
     },
     en: {
         appTitle: "Kingshot HQ - Command Center",
@@ -241,33 +225,17 @@ export const translations = {
         syncAnalyzing: "Analyzing... Please wait.",
         renamePlayer: "Rename to:",
         noNewPlayersToMap: "No new players to map to.",
-        tabKvkRoster: "KvK Roster", // Poprawiony klucz
-        kvkTitle: "KvK Roster Management",
-        kvkListIntro: "Manage your KvK roster.",
-        generateFileBtn: "Generate Text File",
-        generatedFileHeader: (name) => `KvK Roster: ${name}`,
-        noPlayersSelected: "No players selected.",
-        createKvkEventButton: "Create KvK Event",
-        kvkEventNamePlaceholder: "KvK Event Name (e.g. KvK #1)",
-        kvkEventDateLabel: "Event Date (optional):",
-        kvkEventListTitle: "Select KvK Event",
-        manageKvkEventTitle: (name) => `Manage Roster: ${name}`,
-        addPlayersToKvk: "Add Players to Roster",
-        kvkParticipants: "Participants",
-        kvkNotesPlaceholder: "Notes for this player...",
-        kvkRemoveParticipant: "Remove from roster",
-        kvkRemoveParticipantConfirm: "Remove player from KvK roster?",
-        kvkParticipantAddError: "Error adding participant.",
-        kvkParticipantRemoveError: "Error removing participant.",
-        kvkNotesUpdateError: "Error updating notes.",
         searchPlayerPlaceholder: "Type name to search...",
         playerNotFound: "Player with this name not found in the available list.",
         notesLabel: "Notes",
-        // NOWE TŁUMACZENIA DLA HISTORII GRACZA
         historyButton: "History",
         historyForPlayer: (name) => `Progress History: ${name}`,
         backToMembers: "Back to member list",
         noHistoryForPlayer: "No snapshot history found for this player.",
-        snapshotDate: "Date"
+        snapshotDate: "Date",
+        // NOWE TŁUMACZENIA
+        availablePlayers: "Available Players",
+        addSelectedToGroup: "Add selected to group",
+        noPlayersSelected: "No players selected."
     }
 };

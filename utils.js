@@ -21,3 +21,13 @@ export function parsePower(powerString) {
     if (isNaN(numberPart)) return 0;
     return numberPart * multiplier;
 }
+
+// Funkcja debounce
+export function debounce(func, delay) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+}

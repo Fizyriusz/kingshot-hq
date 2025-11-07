@@ -2,14 +2,13 @@
 import { supabaseClient } from './config.js';
 import * as dom from './dom.js';
 import * as state from './state.js';
-// POPRAWKA: Importujemy funkcje modyfikujące stan
 import {
-    setLang, setTabId, setEventDetailFilters, setMemberFilters,
+    setLang, setView, setEventDetailFilters, setMemberFilters,
     setMemberSort, setLastSyncAnalysis, setEventDetailSort
 } from './state.js';
 import { t } from './utils.js';
 import {
-    applyStaticTranslations, // POPRAWKA: Importujemy funkcję bez zmiany nazwy
+    applyStaticTranslations,
     renderMembersView,
     renderPlayerHistoryView,
     renderSyncResults,
@@ -17,50 +16,76 @@ import {
     renderEventDetailView,
     renderSnapshotsView,
     renderSnapshotDetailView,
-    renderKvkEventsList,
-    renderKvkDetailView,
+    // renderKvkEventsList, // Usunięto
+    // renderKvkDetailView, // Usunięto
     renderStatistics
 } from './render.js';
 
 // --- GŁÓWNA LOGIKA APLIKACJI ---
 
 function setLanguage(lang) {
-    setLang(lang); // Użyj zaimportowanej funkcji
+    setLang(lang);
     localStorage.setItem('kingshotLang', lang);
-    applyStaticTranslations(dom, t, state); // POPRAWKA: Wywołaj bezpośrednio zaimportowaną funkcję
-    switchTab(state.currentTabId, false); // Przeładuj widok z nowym językiem
+    applyStaticTranslations(dom, t, state);
+    switchTab(state.currentView.tabId, state.currentView.params, false);
 }
 
-// POPRAWKA: USUNIĘTO ZDUPLIKOWANĄ DEKLARACJĘ FUNKCJI 'applyStaticTranslations'
-
-function switchTab(tabId, updateCurrent = true) {
-    if (updateCurrent) {
-        setTabId(tabId); // Użyj zaimportowanej funkcji
+// Zmieniona logika switchTab, aby poprawnie obsługiwać "pod-widoki"
+function switchTab(tabId, params = {}, updateState = true) {
+    if (updateState) {
+        setView(tabId, params); // Zapisz nowy stan
+    }
+    
+    // Resetuj stany tylko przy przejściu do GŁÓWNEGO widoku zakładki
+    if (updateState && Object.keys(params).length === 0) { 
         if (tabId !== 'events-view') { 
             setEventDetailFilters({ marches: '', name: '', power: '' }); 
-            setEventDetailSort({ column: 'power_level', direction: 'desc' }); // Użyj zaimportowanej funkcji
+            setEventDetailSort({ column: 'power_level', direction: 'desc' });
         }
         if (tabId !== 'members-view') { 
             setMemberFilters({ name: '', power: '' }); 
             setMemberSort({ column: 'name', direction: 'asc' }); 
         }
-        if (tabId !== 'kvk-view') { 
-            // Zakładka KvK już nie istnieje w ten sposób, ale zostawiamy na wszelki wypadek
+        if (tabId === 'members-view') {
+            dom.syncResultsContainer.innerHTML = '';
+            setLastSyncAnalysis(null);
         }
-        dom.syncResultsContainer.innerHTML = '';
-        setLastSyncAnalysis(null);
     }
+    
     dom.tabPanes.forEach(pane => pane.classList.add('hidden'));
     dom.tabs.forEach(tab => tab.classList.remove('active-tab'));
+    
+    // Pokaż kontener główny zakładki (np. 'members-view')
     document.getElementById(tabId).classList.remove('hidden');
-    document.querySelector(`button[data-tab="${tabId}"]`).classList.add('active-tab');
+    // Ustaw przycisk zakładki jako aktywny
+    const tabButton = document.querySelector(`button[data-tab="${tabId}"]`);
+    if (tabButton) {
+        tabButton.classList.add('active-tab');
+    }
 
     renderStatistics();
 
-    if (tabId === 'members-view') { renderMembersView(); }
-    else if (tabId === 'events-view') { renderEventsListView(); }
-    else if (tabId === 'snapshots-view') { renderSnapshotsView(); }
-    else if (tabId === 'kvk-view') { renderKvkEventsList(); }
+    // Logika routingu (kierowania do odpowiedniej funkcji renderującej)
+    if (tabId === 'members-view') {
+        if (params.playerId) {
+            renderPlayerHistoryView(params.playerId, params.playerName, switchTab);
+        } else {
+            renderMembersView();
+        }
+    } else if (tabId === 'events-view') {
+        if (params.eventId) {
+            renderEventDetailView(params.eventId, params.eventName, switchTab);
+        } else {
+            renderEventsListView();
+        }
+    } else if (tabId === 'snapshots-view') {
+        if (params.date) {
+            renderSnapshotDetailView(params.date, switchTab);
+        } else {
+            renderSnapshotsView();
+        }
+    }
+    // Usunięto 'kvk-view'
 }
 
 // --- HANDLERY SYNCHRONIZACJI ---
@@ -143,16 +168,17 @@ function updateUI(user) {
     if (user) {
         dom.authView.classList.add('hidden'); dom.appView.classList.remove('hidden'); dom.logoutButton.classList.remove('hidden');
         renderStatistics();
-        switchTab(state.currentTabId);
+        switchTab(state.currentView.tabId, state.currentView.params, false); 
     } else {
         dom.authView.classList.remove('hidden'); dom.appView.classList.add('hidden'); dom.logoutButton.classList.add('hidden');
         dom.statsContent.innerHTML = '';
+        localStorage.removeItem('kingshotCurrentView');
     }
-    applyStaticTranslations(dom, t, state); // POPRAWKA: Wywołanie z argumentami
+    applyStaticTranslations(dom, t, state);
 }
 
 function init() {
-    applyStaticTranslations(dom, t, state); // POPRAWKA: Wywołanie z argumentami
+    applyStaticTranslations(dom, t, state);
 
     // --- GŁÓWNE LISTENERY ---
     document.getElementById('lang-switcher').addEventListener('click', (e) => { const lang = e.target.dataset.lang; if (lang && lang !== state.currentLang) { setLanguage(lang); } });
@@ -167,8 +193,8 @@ function init() {
     dom.playersListContainer.addEventListener('click', async (e) => {
         if (e.target.classList.contains('delete-player-button')) { const playerId = e.target.dataset.playerId; const playerName = e.target.dataset.playerName; const reason = prompt(t('deleteConfirm', playerName)); if (reason !== null) { const { error } = await supabaseClient.from('players').update({ is_active: false, notes: reason || t('noReason') }).eq('id', playerId); if (error) { console.error(t('playerDeleteError'), error); } else { renderMembersView(); renderStatistics(); } } }
         if (e.target.classList.contains('restore-player-button')) { const playerId = e.target.dataset.playerId; if (confirm(t('restoreConfirm'))) { const { error } = await supabaseClient.from('players').update({ is_active: true, notes: null }).eq('id', playerId); if (error) { console.error(t('playerRestoreError'), error); } else { renderMembersView(); renderStatistics(); } } }
-        if (e.target.classList.contains('history-player-button')) { const playerId = e.target.dataset.playerId; const playerName = e.target.dataset.playerName; renderPlayerHistoryView(playerId, playerName); }
-        if (e.target.id === 'back-to-members-list') { renderMembersView(); }
+        if (e.target.classList.contains('history-player-button')) { const playerId = e.target.dataset.playerId; const playerName = e.target.dataset.playerName; switchTab('members-view', { playerId, playerName }); }
+        if (e.target.id === 'back-to-members-list') { switchTab('members-view'); }
     });
     dom.playersListContainer.addEventListener('change', async (e) => { const playerId = e.target.dataset.playerId; if (!playerId) return; let updateData = {}; if (e.target.classList.contains('player-th-input')) { updateData.th_level = e.target.value || null; } if (e.target.classList.contains('player-marches-select')) { updateData.marches = e.target.value || null; } if (e.target.classList.contains('player-power-input')) { updateData.power_level = e.target.value.trim() || null; } if (Object.keys(updateData).length > 0) { const { error } = await supabaseClient.from('players').update(updateData).eq('id', playerId); if (error) { console.error(t('playerUpdateError'), error); alert(t('playerUpdateError')); } else { console.log(`Zaktualizowano gracza ${playerId} z:`, updateData); renderStatistics(); } } });
     dom.memberFilterNameInput.addEventListener('input', (e) => { state.setMemberFilters({ ...state.memberFilters, name: e.target.value }); renderMembersView(); });
@@ -190,41 +216,28 @@ function init() {
 
     // --- LISTENERY ZAKŁADKI EVENTY ---
     dom.addEventForm.addEventListener('submit', async(e) => { e.preventDefault(); const newName = dom.eventNameInput.value.trim(); if (!newName) return; const { error } = await supabaseClient.from('events').insert({ name: newName }); if (error) alert(t('eventAddError')); else { dom.eventNameInput.value = ''; renderEventsListView(); } });
-    dom.eventsListContainer.addEventListener('click', async (e) => { const eventItem = e.target.closest('.event-item'); const deleteButton = e.target.closest('.delete-event-button'); if (deleteButton) { e.stopPropagation(); const eventId = deleteButton.dataset.eventId; const eventName = deleteButton.dataset.eventName; if (confirm(t('deleteEventConfirm', eventName))) { const { error } = await supabaseClient.from('events').delete().eq('id', eventId); if (error) { alert(t('eventDeleteError')); } else { renderEventsListView(); } } } else if (eventItem) { if (e.target.classList.contains('event-name-span') || e.target === eventItem) { const eventId = eventItem.dataset.eventId; const eventName = eventItem.dataset.eventName; renderEventDetailView(eventId, eventName); } } });
+    dom.eventsListContainer.addEventListener('click', async (e) => { 
+        const eventItem = e.target.closest('.event-item'); 
+        const deleteButton = e.target.closest('.delete-event-button'); 
+        if (deleteButton) { e.stopPropagation(); const eventId = deleteButton.dataset.eventId; const eventName = deleteButton.dataset.eventName; if (confirm(t('deleteEventConfirm', eventName))) { const { error } = await supabaseClient.from('events').delete().eq('id', eventId); if (error) { alert(t('eventDeleteError')); } else { renderEventsListView(); } } } 
+        else if (eventItem) { if (e.target.classList.contains('event-name-span') || e.target === eventItem) { const eventId = eventItem.dataset.eventId; const eventName = eventItem.dataset.eventName; 
+            switchTab('events-view', { eventId, eventName });
+        } } 
+    });
 
     // --- LISTENERY ZAKŁADKI SNAPSHOTY ---
     dom.createSnapshotButton.addEventListener('click', async () => { if (!confirm(t('snapshotConfirm'))) { return; } const { data: players, error: fetchError } = await supabaseClient.from('players').select('id, name, th_level, power_level, marches').eq('is_active', true); if (fetchError) { alert(t('snapshotFetchError')); console.error(fetchError); return; } const snapshotDate = new Date().toISOString().split('T')[0]; const snapshotData = players.map(player => ({ player_id: player.id, snapshot_date: snapshotDate, player_name: player.name, th_level: player.th_level, power_level: player.power_level, marches: player.marches })); const { error: insertError } = await supabaseClient.from('player_snapshots').insert(snapshotData); if (insertError) { alert(t('snapshotSaveError', insertError.message)); console.error(insertError); } else { alert(t('snapshotSaveSuccess', players.length)); renderSnapshotsView(); } });
-    dom.snapshotsListContainer.addEventListener('click', (e) => { const snapshotItem = e.target.closest('.snapshot-item'); if (snapshotItem) { const snapshotDate = snapshotItem.dataset.date; renderSnapshotDetailView(snapshotDate); } });
+    dom.snapshotsListContainer.addEventListener('click', (e) => { 
+        const snapshotItem = e.target.closest('.snapshot-item'); 
+        if (snapshotItem) { 
+            const snapshotDate = snapshotItem.dataset.date; 
+            switchTab('snapshots-view', { date: snapshotDate });
+        } 
+    });
     
-    // --- LISTENERY ZAKŁADKI KVK ---
-    dom.createKvkEventForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = dom.kvkEventNameInput.value.trim();
-        const date = dom.kvkEventDateInput.value;
-        if (!name) return;
-        const { error } = await supabaseClient.from('kvk_events').insert({ name: name, event_date: date || null });
-        if (error) { alert(t('eventAddError')); }
-        else { dom.kvkEventNameInput.value = ''; dom.kvkEventDateInput.value = ''; renderKvkEventsList(); }
-    });
-    dom.kvkContentContainer.addEventListener('click', (e) => {
-        const kvkEventItem = e.target.closest('.kvk-event-item');
-        const deleteButton = e.target.closest('.delete-event-button');
-        if (deleteButton) {
-            e.stopPropagation();
-            const eventId = deleteButton.dataset.eventId;
-            const eventName = deleteButton.dataset.eventName;
-            if (confirm(t('deleteEventConfirm', eventName))) {
-                supabaseClient.from('kvk_events').delete().eq('id', eventId).then(({ error }) => {
-                    if (error) { alert(t('eventDeleteError')); }
-                    else { renderKvkEventsList(); }
-                });
-            }
-        } else if (kvkEventItem) {
-            const kvkEventId = kvkEventItem.dataset.kvkEventId;
-            const kvkEventName = kvkEventItem.dataset.kvkEventName;
-            renderKvkDetailView(kvkEventId, kvkEventName);
-        }
-    });
+    // --- LISTENERY ZAKŁADKI KVK (USUNIĘTE) ---
+    // dom.createKvkEventForm.addEventListener('submit', ...);
+    // dom.kvkContentContainer.addEventListener('click', ...);
 
     // --- START APLIKACJI ---
     supabaseClient.auth.onAuthStateChange((_event, session) => { updateUI(session ? session.user : null); });
