@@ -9,6 +9,7 @@ export let memberFilters = { name: '', power: '' };
 export let memberSort = { column: 'name', direction: 'asc' };
 export let lastSyncAnalysis = null;
 export let eventDetailSort = { column: 'power_level', direction: 'desc' };
+export let lastSnapshotAnalysis = null; // NOWA ZMIENNA
 
 // --- Funkcje modyfikujące stan ---
 export function setLang(lang) { currentLang = lang; }
@@ -26,3 +27,4 @@ export function setMemberFilters(filters) { memberFilters = filters; }
 export function setMemberSort(sort) { memberSort = sort; }
 export function setLastSyncAnalysis(analysis) { lastSyncAnalysis = analysis; }
 export function setEventDetailSort(sort) { eventDetailSort = sort; }
+export function setLastSnapshotAnalysis(analysis) { lastSnapshotAnalysis = analysis; } // NOWA FUNKCJA

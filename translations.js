@@ -117,7 +117,34 @@ export const translations = {
         // NOWE TŁUMACZENIA DLA EVENTÓW
         availablePlayers: "Dostępni Gracze",
         addSelectedToGroup: "Dodaj zaznaczonych do grupy",
-        noPlayersSelected: "Nie zaznaczono żadnych graczy."
+        noPlayersSelected: "Nie zaznaczono żadnych graczy.",
+
+        // NOWE TŁUMACZENIA DLA HISTORYCZNYCH SNAPSHOTÓW
+        addHistoricalSnapshotTitle: "Dodaj Historyczny Snapshot (Ręcznie)",
+        snapshotDataPlaceholder: "Wklej listę: Nazwa, TH, Power (np. 122,8m)",
+        snapshotSelectDate: "Wybierz datę snapshotu:",
+        saveHistoricalSnapshot: "Zapisz Historyczny Snapshot",
+        historicalSnapshotSuccess: (count) => `Pomyślnie dodano ${count} wpisów historycznych.`,
+        historicalSnapshotError: "Błąd zapisu historycznego snapshotu. Upewnij się, że data jest wybrana.",
+        playerMappingError: (names) => `Nie udało się znaleźć ID dla graczy: ${names.join(', ')}. Upewnij się, że są na liście aktywnych członków i ich nazwy są poprawne.`,
+
+// NOWE TŁUMACZENIA DLA ANALIZY SNAPSHOTU
+        analyzeSnapshotButton: "Analizuj Snapshot",
+        snapshotResultsTitle: "Wyniki Analizy Snapshotu",
+        snapshotFoundPlayers: (count) => `Znalezieni Gracze (${count})`,
+        snapshotUnmappedPlayers: (count) => `Niezmapowani Gracze (${count})`,
+        snapshotRemapTo: "Zmapuj na gracza z bazy:",
+        executeSnapshotSave: "Zapisz Zaznaczone Wpisy do Historii",
+        
+        // NOWE KLUCZE
+        createNewHistoricalPlayer: "[ Stwórz nowego gracza (historyczny) ]",
+        orMapToExisting: "--- Lub zmapuj na istniejącego ---",
+        historicalPlayerNote: "Gracz dodany automatycznie z historycznego snapshotu.",
+
+        // ZMIANA ISTNIEJĄCEGO KLUCZA
+        saveHistoricalSnapshot: "Zapisz Historyczny Snapshot",
+        historicalSnapshotSuccess: (count) => `Pomyślnie dodano ${count} wpisów historycznych.`,
+        historicalSnapshotError: "Błąd zapisu historycznego snapshotu. Upewnij się, że data jest wybrana."
     },
     en: {
         appTitle: "Kingshot HQ - Command Center",
@@ -236,6 +263,33 @@ export const translations = {
         // NOWE TŁUMACZENIA
         availablePlayers: "Available Players",
         addSelectedToGroup: "Add selected to group",
-        noPlayersSelected: "No players selected."
+        noPlayersSelected: "No players selected.",
+
+        // NEW TRANSLATIONS FOR HISTORICAL SNAPSHOTS
+        addHistoricalSnapshotTitle: "Add Historical Snapshot (Manual)",
+        snapshotDataPlaceholder: "Paste list: Name, TH, Power (e.g. 122.8m)",
+        snapshotSelectDate: "Select snapshot date:",
+        saveHistoricalSnapshot: "Save Historical Snapshot",
+        historicalSnapshotSuccess: (count) => `Successfully added ${count} historical entries.`,
+        historicalSnapshotError: "Error saving historical snapshot. Make sure the date is selected.",
+        playerMappingError: (names) => `Could not find ID for players: ${names.join(', ')}. Ensure they are on the active members list and their names are correct.`,
+
+// NEW TRANSLATIONS FOR SNAPSHOT ANALYSIS
+        analyzeSnapshotButton: "Analyze Snapshot",
+        snapshotResultsTitle: "Snapshot Analysis Results",
+        snapshotFoundPlayers: (count) => `Found Players (${count})`,
+        snapshotUnmappedPlayers: (count) => `Unmapped Players (${count})`,
+        snapshotRemapTo: "Map to player from DB:",
+        executeSnapshotSave: "Save Selected Entries to History",
+        
+        // NEW KEYS
+        createNewHistoricalPlayer: "[ Create new historical player ]",
+        orMapToExisting: "--- Or map to existing ---",
+        historicalPlayerNote: "Player automatically added from historical snapshot.",
+
+        // CHANGE EXISTING KEY
+        saveHistoricalSnapshot: "Save Historical Snapshot",
+        historicalSnapshotSuccess: (count) => `Successfully added ${count} historical entries.`,
+        historicalSnapshotError: "Error saving historical snapshot. Make sure the date is selected."
     }
 };

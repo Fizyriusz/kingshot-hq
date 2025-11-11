@@ -4,7 +4,8 @@ import * as dom from './dom.js';
 import * as state from './state.js';
 import {
     setLang, setView, setEventDetailFilters, setMemberFilters,
-    setMemberSort, setLastSyncAnalysis, setEventDetailSort
+    setMemberSort, setLastSyncAnalysis, setEventDetailSort,
+    setLastSnapshotAnalysis 
 } from './state.js';
 import { t } from './utils.js';
 import {
@@ -16,13 +17,12 @@ import {
     renderEventDetailView,
     renderSnapshotsView,
     renderSnapshotDetailView,
-    // renderKvkEventsList, // Usunięto
-    // renderKvkDetailView, // Usunięto
+    renderSnapshotAnalysisResults, 
     renderStatistics
 } from './render.js';
 
 // --- GŁÓWNA LOGIKA APLIKACJI ---
-
+// ... (bez zmian: setLanguage, switchTab) ...
 function setLanguage(lang) {
     setLang(lang);
     localStorage.setItem('kingshotLang', lang);
@@ -30,13 +30,11 @@ function setLanguage(lang) {
     switchTab(state.currentView.tabId, state.currentView.params, false);
 }
 
-// Zmieniona logika switchTab, aby poprawnie obsługiwać "pod-widoki"
 function switchTab(tabId, params = {}, updateState = true) {
     if (updateState) {
-        setView(tabId, params); // Zapisz nowy stan
+        setView(tabId, params); 
     }
     
-    // Resetuj stany tylko przy przejściu do GŁÓWNEGO widoku zakładki
     if (updateState && Object.keys(params).length === 0) { 
         if (tabId !== 'events-view') { 
             setEventDetailFilters({ marches: '', name: '', power: '' }); 
@@ -50,14 +48,16 @@ function switchTab(tabId, params = {}, updateState = true) {
             dom.syncResultsContainer.innerHTML = '';
             setLastSyncAnalysis(null);
         }
+        if (tabId === 'snapshots-view') {
+            dom.snapshotResultsContainer.innerHTML = '';
+            setLastSnapshotAnalysis(null);
+        }
     }
     
     dom.tabPanes.forEach(pane => pane.classList.add('hidden'));
     dom.tabs.forEach(tab => tab.classList.remove('active-tab'));
     
-    // Pokaż kontener główny zakładki (np. 'members-view')
     document.getElementById(tabId).classList.remove('hidden');
-    // Ustaw przycisk zakładki jako aktywny
     const tabButton = document.querySelector(`button[data-tab="${tabId}"]`);
     if (tabButton) {
         tabButton.classList.add('active-tab');
@@ -65,7 +65,6 @@ function switchTab(tabId, params = {}, updateState = true) {
 
     renderStatistics();
 
-    // Logika routingu (kierowania do odpowiedniej funkcji renderującej)
     if (tabId === 'members-view') {
         if (params.playerId) {
             renderPlayerHistoryView(params.playerId, params.playerName, switchTab);
@@ -85,10 +84,10 @@ function switchTab(tabId, params = {}, updateState = true) {
             renderSnapshotsView();
         }
     }
-    // Usunięto 'kvk-view'
 }
 
 // --- HANDLERY SYNCHRONIZACJI ---
+// ... (bez zmian: handleSyncAnalysis, handleSyncExecute) ...
 async function handleSyncAnalysis(event) {
     event.preventDefault();
     dom.syncResultsContainer.innerHTML = `<p>${t('syncAnalyzing')}</p>`;
@@ -163,7 +162,207 @@ async function handleSyncExecute(e) {
     dom.syncResultsContainer.innerHTML = ''; dom.syncPlayersInput.value = ''; state.setLastSyncAnalysis(null); renderMembersView(); renderStatistics();
 }
 
+
+// --- HANDLERY SNAPSHOTU (ZAKTUALIZOWANE) ---
+
+// 1. ANALIZA SNAPSHOTU (Bez zmian)
+async function handleAnalyzeHistoricalSnapshot(event) {
+    event.preventDefault();
+    const snapshotDate = dom.snapshotDateInput.value;
+    const pastedText = dom.snapshotDataInput.value.trim();
+    
+    if (!snapshotDate || !pastedText) {
+        alert(t('historicalSnapshotError'));
+        return;
+    }
+
+    const button = dom.analyzeSnapshotButton;
+    button.disabled = true;
+    button.textContent = t('syncAnalyzing');
+    dom.snapshotResultsContainer.innerHTML = `<p>${t('syncAnalyzing')}</p>`;
+
+    try {
+        const { data: dbPlayers, error: fetchError } = await supabaseClient
+            .from('players')
+            .select('id, name');
+        if (fetchError) throw new Error(`Błąd pobierania graczy: ${fetchError.message}`);
+        
+        const dbPlayerMap = new Map(dbPlayers.map(p => [p.name, p]));
+        const dbPlayerNames = new Set(dbPlayers.map(p => p.name));
+
+        const pastedPlayers = [];
+        const lines = pastedText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        
+        lines.forEach(line => {
+            const parts = line.split(',');
+            const name = parts[0] ? parts[0].trim() : null;
+            if (!name) return;
+            pastedPlayers.push({
+                name: name,
+                th_level: parts[1] ? parseInt(parts[1].trim()) || null : null,
+                power_level: parts[2] ? parts[2].trim() || null : null
+            });
+        });
+
+        const pastedPlayerNames = new Set(pastedPlayers.map(p => p.name));
+
+        const foundPlayers = [];
+        const unmappedPlayers = [];
+
+        for (const pastedPlayer of pastedPlayers) {
+            if (dbPlayerMap.has(pastedPlayer.name)) {
+                foundPlayers.push({
+                    ...pastedPlayer,
+                    player_id: dbPlayerMap.get(pastedPlayer.name).id
+                });
+            } else {
+                unmappedPlayers.push(pastedPlayer);
+            }
+        }
+        
+        const unmatchedDbPlayers = dbPlayers.filter(p => !pastedPlayerNames.has(p.name));
+
+        const analysis = { foundPlayers, unmappedPlayers, unmatchedDbPlayers, snapshotDate };
+        state.setLastSnapshotAnalysis(analysis);
+        renderSnapshotAnalysisResults(analysis);
+
+    } catch (error) {
+        alert(t('historicalSnapshotError') + `\n${error.message}`);
+        dom.snapshotResultsContainer.innerHTML = '';
+    } finally {
+        button.disabled = false;
+        button.textContent = t('analyzeSnapshotButton');
+    }
+}
+
+// 2. WYKONANIE ZAPISU SNAPSHOTU (Przebudowana logika)
+async function handleExecuteHistoricalSnapshot(e) {
+    if (!e.target.classList.contains('snapshot-execute-button')) return;
+    if (!state.lastSnapshotAnalysis) return;
+
+    const button = e.target;
+    button.disabled = true;
+    button.textContent = t('syncAnalyzing');
+
+    const { foundPlayers, unmappedPlayers, snapshotDate } = state.lastSnapshotAnalysis;
+    
+    const snapshotDataToInsert = [];
+    const playersToCreate = [];
+    const unmappedErrors = [];
+
+    try {
+        // 1. Zbierz "znalezionych graczy", którzy są zaznaczeni
+        document.querySelectorAll('input[data-snapshot-type="found"]:checked').forEach(checkbox => {
+            const index = checkbox.dataset.index;
+            const player = foundPlayers[index];
+            snapshotDataToInsert.push({
+                player_id: player.player_id,
+                snapshot_date: snapshotDate,
+                player_name: player.name, 
+                th_level: player.th_level,
+                power_level: player.power_level,
+                marches: null
+            });
+        });
+
+        // 2. Przetwórz "niezmapowanych graczy"
+        document.querySelectorAll('input[data-snapshot-type="unmapped"]:checked').forEach(checkbox => {
+            const index = checkbox.dataset.index;
+            const player = unmappedPlayers[index];
+            const remapSelect = document.querySelector(`select[data-unmapped-index="${index}"]`);
+            const selectedAction = remapSelect ? remapSelect.value : '';
+
+            if (selectedAction === "CREATE_NEW_HISTORICAL") {
+                // Opcja 1: Stwórz nowego gracza
+                playersToCreate.push(player);
+            } else if (selectedAction) {
+                // Opcja 2: Zmapuj na istniejącego
+                snapshotDataToInsert.push({
+                    player_id: selectedAction, // To jest ID gracza z <option value="ID">
+                    snapshot_date: snapshotDate,
+                    player_name: player.name, // Zapisz starą nazwę
+                    th_level: player.th_level,
+                    power_level: player.power_level,
+                    marches: null
+                });
+            } else {
+                // Opcja 3: Błąd - zaznaczony, ale bez akcji
+                unmappedErrors.push(player.name);
+            }
+        });
+
+        // 3. Sprawdź, czy były jakieś problemy
+        if (unmappedErrors.length > 0) {
+            alert(t('playerMappingError', unmappedErrors));
+            return; // Zakończ funkcję
+        }
+
+        // 4. Stwórz nowych graczy (historycznych), jeśli są
+        if (playersToCreate.length > 0) {
+            const newPlayerEntries = playersToCreate.map(p => ({
+                name: p.name,
+                is_active: false, // Ustaw jako nieaktywny
+                notes: t('historicalPlayerNote')
+                // th_level i power_level zostaną zapisane tylko w snapshotach
+            }));
+
+            // Wstaw nowych graczy i pobierz ich ID
+            const { data: createdPlayers, error: createError } = await supabaseClient
+                .from('players')
+                .insert(newPlayerEntries)
+                .select('id, name');
+
+            if (createError) {
+                throw new Error(`Błąd tworzenia graczy historycznych: ${createError.message}`);
+            }
+
+            // Stwórz mapę nowych ID
+            const newPlayerIdMap = new Map(createdPlayers.map(p => [p.name, p.id]));
+
+            // Dodaj ich dane do listy snapshotów do wstawienia
+            playersToCreate.forEach(p => {
+                const newId = newPlayerIdMap.get(p.name);
+                if (newId) {
+                    snapshotDataToInsert.push({
+                        player_id: newId,
+                        snapshot_date: snapshotDate,
+                        player_name: p.name,
+                        th_level: p.th_level,
+                        power_level: p.power_level,
+                        marches: null
+                    });
+                }
+            });
+        }
+
+        // 5. Ostateczny zapis do bazy
+        if (snapshotDataToInsert.length === 0) {
+            alert(t('noPlayersSelected'));
+        } else {
+            const { error: insertError } = await supabaseClient
+                .from('player_snapshots')
+                .insert(snapshotDataToInsert);
+            
+            if (insertError) throw new Error(insertError.message);
+
+            alert(t('historicalSnapshotSuccess', snapshotDataToInsert.length));
+            state.setLastSnapshotAnalysis(null);
+            dom.snapshotDataInput.value = '';
+            dom.snapshotDateInput.value = '';
+            dom.snapshotResultsContainer.innerHTML = '';
+            renderSnapshotsView(); // Odśwież widok
+        }
+    } catch (error) {
+        alert(t('historicalSnapshotError') + `\n${error.message}`);
+    } finally {
+        button.disabled = false;
+        button.textContent = t('executeSnapshotSave');
+    }
+}
+
+
 // --- FUNKCJE UI I AUTENTYKACJI ---
+// ... (bez zmian: updateUI) ...
 function updateUI(user) {
     if (user) {
         dom.authView.classList.add('hidden'); dom.appView.classList.remove('hidden'); dom.logoutButton.classList.remove('hidden');
@@ -177,6 +376,7 @@ function updateUI(user) {
     applyStaticTranslations(dom, t, state);
 }
 
+
 function init() {
     applyStaticTranslations(dom, t, state);
 
@@ -187,6 +387,7 @@ function init() {
     dom.tabs.forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
     
     // --- LISTENERY ZAKŁADKI CZŁONKOWIE ---
+    // ... (bez zmian) ...
     dom.addPlayerForm.addEventListener('submit', async (e) => { e.preventDefault(); const newName = dom.playerNameInput.value.trim(); const thLevel = dom.playerThInput.value; const powerLevel = dom.playerPowerInput.value.trim(); const marches = dom.playerMarchesInput.value; if (!newName) return; const { error } = await supabaseClient.from('players').insert({ name: newName, th_level: thLevel || null, power_level: powerLevel || null, marches: marches || null }); if (error) alert(t('playerAddError')); else { dom.playerNameInput.value = ''; dom.playerThInput.value = ''; dom.playerPowerInput.value = ''; dom.playerMarchesInput.value = ''; renderMembersView(); renderStatistics(); } });
     dom.syncPlayersForm.addEventListener('submit', handleSyncAnalysis);
     dom.syncResultsContainer.addEventListener('click', handleSyncExecute);
@@ -215,6 +416,7 @@ function init() {
     });
 
     // --- LISTENERY ZAKŁADKI EVENTY ---
+    // ... (bez zmian) ...
     dom.addEventForm.addEventListener('submit', async(e) => { e.preventDefault(); const newName = dom.eventNameInput.value.trim(); if (!newName) return; const { error } = await supabaseClient.from('events').insert({ name: newName }); if (error) alert(t('eventAddError')); else { dom.eventNameInput.value = ''; renderEventsListView(); } });
     dom.eventsListContainer.addEventListener('click', async (e) => { 
         const eventItem = e.target.closest('.event-item'); 
@@ -227,6 +429,13 @@ function init() {
 
     // --- LISTENERY ZAKŁADKI SNAPSHOTY ---
     dom.createSnapshotButton.addEventListener('click', async () => { if (!confirm(t('snapshotConfirm'))) { return; } const { data: players, error: fetchError } = await supabaseClient.from('players').select('id, name, th_level, power_level, marches').eq('is_active', true); if (fetchError) { alert(t('snapshotFetchError')); console.error(fetchError); return; } const snapshotDate = new Date().toISOString().split('T')[0]; const snapshotData = players.map(player => ({ player_id: player.id, snapshot_date: snapshotDate, player_name: player.name, th_level: player.th_level, power_level: player.power_level, marches: player.marches })); const { error: insertError } = await supabaseClient.from('player_snapshots').insert(snapshotData); if (insertError) { alert(t('snapshotSaveError', insertError.message)); console.error(insertError); } else { alert(t('snapshotSaveSuccess', players.length)); renderSnapshotsView(); } });
+    
+    // ZMIENIONY LISTENER:
+    dom.analyzeSnapshotForm.addEventListener('submit', handleAnalyzeHistoricalSnapshot);
+
+    // NOWY LISTENER:
+    dom.snapshotResultsContainer.addEventListener('click', handleExecuteHistoricalSnapshot);
+
     dom.snapshotsListContainer.addEventListener('click', (e) => { 
         const snapshotItem = e.target.closest('.snapshot-item'); 
         if (snapshotItem) { 
@@ -235,10 +444,6 @@ function init() {
         } 
     });
     
-    // --- LISTENERY ZAKŁADKI KVK (USUNIĘTE) ---
-    // dom.createKvkEventForm.addEventListener('submit', ...);
-    // dom.kvkContentContainer.addEventListener('click', ...);
-
     // --- START APLIKACJI ---
     supabaseClient.auth.onAuthStateChange((_event, session) => { updateUI(session ? session.user : null); });
 }

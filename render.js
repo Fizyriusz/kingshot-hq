@@ -5,6 +5,7 @@ import * as state from './state.js';
 import { t, parsePower, debounce } from './utils.js';
 
 // --- TŁUMACZENIA ---
+// ... (bez zmian) ...
 export function applyStaticTranslations(dom, t, state) {
     document.documentElement.lang = state.currentLang; document.title = t('appTitle');
     document.querySelectorAll('[data-translate-key]').forEach(el => { el.textContent = t(el.dataset.translateKey); });
@@ -13,6 +14,7 @@ export function applyStaticTranslations(dom, t, state) {
     dom.eventNameInput.placeholder = t('eventNamePlaceholder');
     dom.memberFilterNameInput.placeholder = t('nameFilterPlaceholder'); dom.memberFilterPowerInput.placeholder = t('powerFilterPlaceholder');
     if (dom.syncPlayersInput) { dom.syncPlayersInput.placeholder = t('syncToolPlaceholder'); }
+    if (dom.snapshotDataInput) { dom.snapshotDataInput.placeholder = t('snapshotDataPlaceholder'); }
     
     const memberSortControls = document.querySelector('#members-view .sort-controls');
     if (memberSortControls) {
@@ -22,22 +24,18 @@ export function applyStaticTranslations(dom, t, state) {
         memberSortControls.querySelector('.sort-button[data-sort="marches"]').textContent = t('sortMarches');
     }
     
-    // Usunięto odwołanie do kvkSortControls
-    // Usunięto odwołanie do kvkNameInput
-    
     document.querySelectorAll('#lang-switcher button').forEach(btn => { btn.classList.toggle('active-lang', btn.dataset.lang === state.currentLang); });
 }
 
 // --- ZAKŁADKA "CZŁONKOWIE" ---
-
+// ... (bez zmian: toggleMemberControls, renderMembersView, renderPlayerHistoryView) ...
 export function toggleMemberControls(show) {
     dom.memberControls.forEach(el => el.classList.toggle('hidden', !show));
 }
 
 export async function renderMembersView() {
     const showInactive = dom.showInactiveToggle.checked;
-    toggleMemberControls(true); // Zawsze pokazuj kontrolki (naprawia błąd)
-    // Ukryj filtry/sortowanie tylko jeśli pokazujemy nieaktywnych
+    toggleMemberControls(true); 
     document.querySelector('.member-filters').classList.toggle('hidden', showInactive);
     dom.memberSortControlsContainer.classList.toggle('hidden', showInactive);
 
@@ -135,6 +133,7 @@ export async function renderPlayerHistoryView(playerId, playerName, switchTab) {
 }
 
 // --- LOGIKA SYNCHRONIZACJI ---
+// ... (bez zmian: renderSyncResults) ...
 export function renderSyncResults(analysis) {
     if (analysis.toAdd.length === 0 && analysis.toUpdate.length === 0 && analysis.toRemove.length === 0) {
         dom.syncResultsContainer.innerHTML = `<h4>${t('syncResultsTitle')}</h4><p>${t('noChangesFound')}</p>`;
@@ -185,7 +184,57 @@ export function renderSyncResults(analysis) {
     dom.syncResultsContainer.innerHTML = html;
 }
 
+// --- FUNKCJA: RENDEROWANIE WYNIKÓW ANALIZY SNAPSHOTU (ZAKTUALIZOWANA) ---
+export function renderSnapshotAnalysisResults(analysis) {
+    const { foundPlayers, unmappedPlayers, unmatchedDbPlayers, snapshotDate } = analysis;
+
+    if (foundPlayers.length === 0 && unmappedPlayers.length === 0) {
+        dom.snapshotResultsContainer.innerHTML = `<h4>${t('snapshotResultsTitle')}</h4><p>${t('noChangesFound')}</p>`;
+        return;
+    }
+
+    let html = `<h4>${t('snapshotResultsTitle')} (dla daty: ${snapshotDate})</h4>`;
+    
+    const dbPlayerOptions = unmatchedDbPlayers.length > 0 
+        ? unmatchedDbPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('') 
+        : `<option value="" disabled>${t('noNewPlayersToMap')}</option>`;
+
+    if (foundPlayers.length > 0) {
+        html += `<div class="sync-section">
+            <h4>${t('snapshotFoundPlayers', foundPlayers.length)}</h4>
+            <ul>${foundPlayers.map((p, index) => `
+                <li id="snap-found-${index}">
+                    <input type="checkbox" checked data-snapshot-type="found" data-index="${index}">
+                    <div class="sync-details new-player">+ ${p.name} (TH: ${p.th_level || '?'}, Power: ${p.power_level || '?'})</div>
+                </li>`).join('')}</ul>
+        </div>`;
+    }
+
+    if (unmappedPlayers.length > 0) {
+        html += `<div class="sync-section">
+            <h4>${t('snapshotUnmappedPlayers', unmappedPlayers.length)}</h4>
+            <ul>${unmappedPlayers.map((p, index) => `
+                <li id="snap-unmapped-${index}">
+                    <input type="checkbox" checked data-snapshot-type="unmapped" data-index="${index}">
+                    <div class="sync-details removed-player">? ${p.name} (TH: ${p.th_level || '?'}, Power: ${p.power_level || '?'})</div>
+                    <label>${t('snapshotRemapTo')}</label>
+                    <select class="snapshot-remap-select" data-unmapped-index="${index}">
+                        <option value="">--</option>
+                        <option value="CREATE_NEW_HISTORICAL">${t('createNewHistoricalPlayer')}</option>
+                        <option value="" disabled>${t('orMapToExisting')}</option>
+                        ${dbPlayerOptions}
+                    </select>
+                </li>`).join('')}</ul>
+        </div>`;
+    }
+
+    html += `<button class="sync-execute-button snapshot-execute-button">${t('executeSnapshotSave')}</button>`;
+    dom.snapshotResultsContainer.innerHTML = html;
+}
+
+
 // --- ZAKŁADKA "EVENTY" (PRZEBUDOWANA) ---
+// ... (bez zmian: renderEventsListView, renderEventDetailView, attachDetailViewListeners) ...
 export async function renderEventsListView() {
     dom.addEventForm.classList.remove('hidden');
     dom.eventsListContainer.innerHTML = '';
@@ -203,23 +252,17 @@ export async function renderEventDetailView(eventId, eventName, switchTab) {
     dom.addEventForm.classList.add('hidden');
     dom.eventsListContainer.innerHTML = `<p>${t('syncAnalyzing')}</p>`;
 
-    // 1. Pobierz dane eventu ORAZ WSZYSTKICH graczy sojuszu (ze wszystkimi danymi)
     const { data: eventData, error: eventError } = await supabaseClient.from('events').select(`groups (id, name, group_members (id, status, players ( id, name )))`).eq('id', eventId).single();
     const { data: allPlayers, error: playersError } = await supabaseClient.from('players').select('*').eq('is_active', true);
     if (eventError || playersError) { console.error(t('loadingError'), eventError || playersError); dom.eventsListContainer.innerHTML = `<p class="error">${t('loadingError')}</p>`; return; }
 
-    // 2. Oblicz, którzy gracze są już przypisani W TYM EVENCIE
     const assignedPlayerIds = eventData.groups.flatMap(g => g.group_members.map(gm => gm.players.id));
-    
-    // 3. Stwórz listę dostępnych graczy (wszyscy aktywni - już przypisani)
     let availablePlayers = allPlayers.filter(p => !assignedPlayerIds.includes(p.id));
 
-    // 4. Zastosuj filtry na liście dostępnych graczy
     if (state.eventDetailFilters.marches) { availablePlayers = availablePlayers.filter(p => p.marches == state.eventDetailFilters.marches); }
     if (state.eventDetailFilters.name) { const filterName = state.eventDetailFilters.name.toLowerCase(); availablePlayers = availablePlayers.filter(p => p.name.toLowerCase().includes(filterName)); }
     if (state.eventDetailFilters.power) { const filterPower = state.eventDetailFilters.power.toLowerCase(); availablePlayers = availablePlayers.filter(p => (p.power_level || '').toLowerCase().includes(filterPower)); }
     
-    // 5. Zastosuj sortowanie do listy dostępnych graczy
     if (state.eventDetailSort.column === 'power_level') {
         availablePlayers.sort((a, b) => {
             const powerA = parsePower(a.power_level); const powerB = parsePower(b.power_level);
@@ -237,7 +280,6 @@ export async function renderEventDetailView(eventId, eventName, switchTab) {
         });
     }
     
-    // 6. Renderuj UI
     let html = `
         <div class="event-detail-header"><h2>${t('manageEventTitle', eventName)}</h2><button id="back-to-events-list">${t('backToList')}</button></div>
         
@@ -339,7 +381,6 @@ export function attachDetailViewListeners(eventId, eventName, switchTab) {
         debouncedRender();
     });
     
-    // Poprawiony selektor
     document.querySelector('#event-detail-layout .sort-controls').addEventListener('click', (e) => {
         const target = e.target;
         if (target.classList.contains('sort-button')) {
@@ -373,10 +414,20 @@ export function attachDetailViewListeners(eventId, eventName, switchTab) {
 
 
 // --- ZAKŁADKA "SNAPSHOTY" ---
+// ... (bez zmian: renderSnapshotsView, renderSnapshotDetailView) ...
 export async function renderSnapshotsView() { 
     dom.createSnapshotButton.classList.remove('hidden'); 
+    
+    if (dom.analyzeSnapshotForm) {
+        dom.analyzeSnapshotForm.classList.remove('hidden');
+        dom.snapshotDataInput.value = '';
+        dom.snapshotDateInput.value = '';
+    }
+    if (dom.snapshotResultsContainer) {
+        dom.snapshotResultsContainer.innerHTML = '';
+    }
+    
     dom.eventsListContainer.innerHTML = '';
-    // dom.kvkContentContainer.innerHTML = ''; // Usunięto
     const { data, error } = await supabaseClient.from('player_snapshots').select('snapshot_date').order('snapshot_date', { ascending: false }); 
     if (error) { console.error(t('loadingError'), error); dom.snapshotsListContainer.innerHTML = `<p class="error">${t('loadingError')}</p>`; return; } 
     const uniqueDates = [...new Set(data.map(item => item.snapshot_date))]; 
@@ -385,24 +436,33 @@ export async function renderSnapshotsView() {
 }
 export async function renderSnapshotDetailView(date, switchTab) { 
     dom.createSnapshotButton.classList.add('hidden'); 
+    
+    if (dom.analyzeSnapshotForm) {
+        dom.analyzeSnapshotForm.classList.add('hidden');
+    }
+    if (dom.snapshotResultsContainer) {
+        dom.snapshotResultsContainer.innerHTML = '';
+    }
+    
     const { data: snapshotData, error } = await supabaseClient.from('player_snapshots').select('*').eq('snapshot_date', date).order('player_name', { ascending: true }); 
     if (error) { console.error(t('loadingError'), error); dom.snapshotsListContainer.innerHTML = `<p class="error">${t('loadingError')}</p>`; return; } 
     const formattedDate = new Date(date).toLocaleDateString(state.currentLang); 
     let html = `<div class="event-detail-header"><h2>${t('snapshotDetailTitle', formattedDate)}</h2><button id="back-to-snapshots-list">${t('backToList')}</button></div>`; 
-    html += snapshotData.map(player => ` <div class="player-item"> <span class="player-name">${player.player_name}</span> <div class="player-details"> <span>${t('thLabel')}: <strong>${snapshot.th_level || '?'}</strong></span> <span>${t('powerLabel')}: <strong>${snapshot.power_level || '?'}</strong></span> <span>${t('marchesLabel')}: <strong>${snapshot.marches || '?'}</strong></span> </div> </div> `).join(''); 
+    
+    html += snapshotData.map(player => ` <div class="player-item"> <span class="player-name">${player.player_name}</span> <div class="player-details"> <span>${t('thLabel')}: <strong>${player.th_level || '?'}</strong></span> <span>${t('powerLabel')}: <strong>${player.power_level || '?'}</strong></span> <span>${t('marchesLabel')}: <strong>${player.marches || '?'}</strong></span> </div> </div> `).join(''); 
+    
     dom.snapshotsListContainer.innerHTML = html; 
     document.getElementById('back-to-snapshots-list').addEventListener('click', () => switchTab('snapshots-view')); 
 }
 
 // --- ZAKŁADKA "KVK ROSTER" (USUNIĘTA LOGIKA) ---
-export async function renderKvkEventsList() {
-    dom.kvkContentContainer.innerHTML = '';
-}
+export async function renderKvkEventsList() {}
 export async function renderKvkDetailView(kvkEventId, kvkEventName, switchTab) {}
 export function attachKvkDetailListeners(kvkEventId, kvkEventName, switchTab) {}
 
 
 // --- FUNKCJA STATYSTYK ---
+// ... (bez zmian) ...
 export async function renderStatistics() {
     const { data: players, error } = await supabaseClient.from('players').select('th_level, power_level').eq('is_active', true);
     if (error) { dom.statsContent.innerHTML = `<p class="error">${t('loadingError')}</p>`; return; }

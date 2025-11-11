@@ -30,6 +30,13 @@ export const syncPlayersForm = document.getElementById('sync-players-form');
 export const syncPlayersInput = document.getElementById('sync-players-input');
 export const syncResultsContainer = document.getElementById('sync-results-container');
 
+// ZMIENIONE NAZWY I NOWE ELEMENTY DOM DLA HISTORYCZNYCH SNAPSHOTÓW
+export const analyzeSnapshotForm = document.getElementById('analyze-snapshot-form');
+export const snapshotDateInput = document.getElementById('snapshot-date-input');
+export const snapshotDataInput = document.getElementById('snapshot-data-input');
+export const analyzeSnapshotButton = document.getElementById('analyze-snapshot-button');
+export const snapshotResultsContainer = document.getElementById('snapshot-results-container');
+
 // Usunięto elementy KvK
 
 export const memberControls = [

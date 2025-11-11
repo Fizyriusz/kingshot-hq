@@ -102,12 +102,25 @@
                         <h3 data-translate-key="manageSnapshots">Zarządzanie Snapshotami</h3>
                         <p data-translate-key="snapshotDescription">Snapshot zapisuje aktualny stan...</p>
                         <button id="create-snapshot-button" class="button-large" data-translate-key="createSnapshotButton">Stwórz nowy snapshot</button>
+                        
                         <hr class="divider">
+
+                        <h3 data-translate-key="addHistoricalSnapshotTitle">Dodaj Historyczny Snapshot (Ręcznie)</h3>
+                        <form id="analyze-snapshot-form"> <div class="player-filters" style="gap: 20px;">
+                                <label for="snapshot-date-input" data-translate-key="snapshotSelectDate">Wybierz datę snapshotu:</label>
+                                <input type="date" id="snapshot-date-input" required>
+                            </div>
+                            <textarea id="snapshot-data-input" placeholder="Wklej listę: Nazwa, TH, Power (np. 122,8m)" rows="10"></textarea>
+                            <button type="submit" id="analyze-snapshot-button" data-translate-key="analyzeSnapshotButton">Analizuj Snapshot</button> </form>
+                        <div id="snapshot-results-container"></div> <hr class="divider">
                         <h3 data-translate-key="snapshotHistory">Historia Snapshotów</h3>
                         <div id="snapshots-list-container"></div>
                     </section>
                     
-                    </div> </div> </div> </main>
+                    </div>
+                </div>
+            </div>
+        </main>
 
     <script type="module" src="main.js"></script>
 </body>
