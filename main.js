@@ -7,7 +7,7 @@ import {
     setMemberSort, setLastSyncAnalysis, setEventDetailSort,
     setLastSnapshotAnalysis 
 } from './state.js';
-import { t } from './utils.js';
+import { t, parseTh } from './utils.js';
 import {
     applyStaticTranslations,
     renderMembersView,
@@ -100,7 +100,7 @@ async function handleSyncAnalysis(event) {
             if (!parts[0]) throw new Error(t('bulkParseError', 'Każdy wiersz musi mieć przynajmniej nazwę.'));
             const name = parts[0].trim();
             if (pastedListMap.has(name)) { console.warn(`Zduplikowany nick w liście wklejonej: ${name}. Użyto ostatniego wpisu.`); }
-            pastedListMap.set(name, { name: name, th_level: parts[1] ? parseInt(parts[1].trim()) || null : null, power_level: parts[2] ? parts[2].trim() || null : null });
+            pastedListMap.set(name, { name: name, th_level: parts[1] ? parseTh(parts[1].trim()) : null, power_level: parts[2] ? parts[2].trim() || null : null });
         });
     } catch (parseError) {
         alert(t('bulkParseError', parseError.message));
@@ -199,7 +199,7 @@ async function handleAnalyzeHistoricalSnapshot(event) {
             if (!name) return;
             pastedPlayers.push({
                 name: name,
-                th_level: parts[1] ? parseInt(parts[1].trim()) || null : null,
+                th_level: parts[1] ? parseTh(parts[1].trim()) : null,
                 power_level: parts[2] ? parts[2].trim() || null : null
             });
         });
@@ -388,7 +388,7 @@ function init() {
     
     // --- LISTENERY ZAKŁADKI CZŁONKOWIE ---
     // ... (bez zmian) ...
-    dom.addPlayerForm.addEventListener('submit', async (e) => { e.preventDefault(); const newName = dom.playerNameInput.value.trim(); const thLevel = dom.playerThInput.value; const powerLevel = dom.playerPowerInput.value.trim(); const marches = dom.playerMarchesInput.value; if (!newName) return; const { error } = await supabaseClient.from('players').insert({ name: newName, th_level: thLevel || null, power_level: powerLevel || null, marches: marches || null }); if (error) alert(t('playerAddError')); else { dom.playerNameInput.value = ''; dom.playerThInput.value = ''; dom.playerPowerInput.value = ''; dom.playerMarchesInput.value = ''; renderMembersView(); renderStatistics(); } });
+    dom.addPlayerForm.addEventListener('submit', async (e) => { e.preventDefault(); const newName = dom.playerNameInput.value.trim(); const thLevel = parseTh(dom.playerThInput.value); const powerLevel = dom.playerPowerInput.value.trim(); const marches = dom.playerMarchesInput.value; if (!newName) return; const { error } = await supabaseClient.from('players').insert({ name: newName, th_level: thLevel, power_level: powerLevel || null, marches: marches || null }); if (error) alert(t('playerAddError')); else { dom.playerNameInput.value = ''; dom.playerThInput.value = ''; dom.playerPowerInput.value = ''; dom.playerMarchesInput.value = ''; renderMembersView(); renderStatistics(); } });
     dom.syncPlayersForm.addEventListener('submit', handleSyncAnalysis);
     dom.syncResultsContainer.addEventListener('click', handleSyncExecute);
     dom.playersListContainer.addEventListener('click', async (e) => {
@@ -397,7 +397,7 @@ function init() {
         if (e.target.classList.contains('history-player-button')) { const playerId = e.target.dataset.playerId; const playerName = e.target.dataset.playerName; switchTab('members-view', { playerId, playerName }); }
         if (e.target.id === 'back-to-members-list') { switchTab('members-view'); }
     });
-    dom.playersListContainer.addEventListener('change', async (e) => { const playerId = e.target.dataset.playerId; if (!playerId) return; let updateData = {}; if (e.target.classList.contains('player-th-input')) { updateData.th_level = e.target.value || null; } if (e.target.classList.contains('player-marches-select')) { updateData.marches = e.target.value || null; } if (e.target.classList.contains('player-power-input')) { updateData.power_level = e.target.value.trim() || null; } if (Object.keys(updateData).length > 0) { const { error } = await supabaseClient.from('players').update(updateData).eq('id', playerId); if (error) { console.error(t('playerUpdateError'), error); alert(t('playerUpdateError')); } else { console.log(`Zaktualizowano gracza ${playerId} z:`, updateData); renderStatistics(); } } });
+    dom.playersListContainer.addEventListener('change', async (e) => { const playerId = e.target.dataset.playerId; if (!playerId) return; let updateData = {}; if (e.target.classList.contains('player-th-input')) { updateData.th_level = parseTh(e.target.value); } if (e.target.classList.contains('player-marches-select')) { updateData.marches = e.target.value || null; } if (e.target.classList.contains('player-power-input')) { updateData.power_level = e.target.value.trim() || null; } if (Object.keys(updateData).length > 0) { const { error } = await supabaseClient.from('players').update(updateData).eq('id', playerId); if (error) { console.error(t('playerUpdateError'), error); alert(t('playerUpdateError')); } else { console.log(`Zaktualizowano gracza ${playerId} z:`, updateData); renderStatistics(); } } });
     dom.memberFilterNameInput.addEventListener('input', (e) => { state.setMemberFilters({ ...state.memberFilters, name: e.target.value }); renderMembersView(); });
     dom.memberFilterPowerInput.addEventListener('input', (e) => { state.setMemberFilters({ ...state.memberFilters, power: e.target.value }); renderMembersView(); });
     dom.showInactiveToggle.addEventListener('change', () => { renderMembersView(); });

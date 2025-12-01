@@ -2,7 +2,7 @@
 import { supabaseClient } from './config.js';
 import * as dom from './dom.js';
 import * as state from './state.js';
-import { t, parsePower, debounce } from './utils.js';
+import { t, parsePower, debounce, formatTh } from './utils.js';
 
 // --- TŁUMACZENIA ---
 // ... (bez zmian) ...
@@ -84,7 +84,7 @@ export async function renderMembersView() {
             <div class="player-item">
                 <span class="player-name">${player.name}</span>
                 <div class="player-details">
-                    <label>${t('thLabel')}:</label> <input type="number" class="player-th-input" value="${player.th_level || ''}" data-player-id="${player.id}" min="1" placeholder="${t('lvlPlaceholder')}">
+                    <label>${t('thLabel')}:</label> <input type="text" class="player-th-input" value="${player.th_level ? formatTh(player.th_level) : ''}" data-player-id="${player.id}" placeholder="${t('lvlPlaceholder')}">
                     <label>${t('powerLabel')}:</label> <input type="text" class="player-power-input" value="${player.power_level || ''}" data-player-id="${player.id}" placeholder="${t('powerPlaceholderShort')}">
                     <label>${t('marchesLabel')}:</label> <select class="player-marches-select" data-player-id="${player.id}"> <option value="" ${!player.marches ? 'selected' : ''}>?</option> <option value="4" ${player.marches == 4 ? 'selected' : ''}>4</option> <option value="5" ${player.marches == 5 ? 'selected' : ''}>5</option> <option value="6" ${player.marches == 6 ? 'selected' : ''}>6</option> </select>
                 </div>
@@ -118,7 +118,7 @@ export async function renderPlayerHistoryView(playerId, playerName, switchTab) {
             <div class="snapshot-item">
                 <span class="player-name">${t('snapshotDate')}: ${new Date(snapshot.snapshot_date).toLocaleDateString(state.currentLang)}</span>
                 <div class="player-details">
-                    <span>${t('thLabel')}: <strong>${snapshot.th_level || '?'}</strong></span>
+                    <span>${t('thLabel')}: <strong>${snapshot.th_level ? formatTh(snapshot.th_level) : '?'}</strong></span>
                     <span>${t('powerLabel')}: <strong>${snapshot.power_level || '?'}</strong></span>
                     <span>${t('marchesLabel')}: <strong>${snapshot.marches || '?'}</strong></span>
                 </div>
@@ -147,7 +147,7 @@ export function renderSyncResults(analysis) {
             <ul>${analysis.toAdd.map((p, index) => `
                 <li id="sync-add-${index}">
                     <input type="checkbox" checked data-sync-type="add" data-index="${index}">
-                    <div class="sync-details new-player">+ ${p.name} (TH: ${p.th_level || '?'}, Power: ${p.power_level || '?'})</div>
+                    <div class="sync-details new-player">+ ${p.name} (TH: ${p.th_level ? formatTh(p.th_level) : '?'}, Power: ${p.power_level || '?'})</div>
                 </li>`).join('')}</ul>
         </div>`;
     }
@@ -159,7 +159,7 @@ export function renderSyncResults(analysis) {
                     <input type="checkbox" checked data-sync-type="update" data-index="${index}">
                     <div class="sync-details">
                         ${p.name}
-                        ${p.oldData.th !== p.newData.th_level ? `<div class="update-diff">TH: ${p.oldData.th || '?'} -> ${p.newData.th_level || '?'}</div>` : ''}
+                        ${p.oldData.th !== p.newData.th_level ? `<div class="update-diff">TH: ${p.oldData.th ? formatTh(p.oldData.th) : '?'} -> ${p.newData.th_level ? formatTh(p.newData.th_level) : '?'}</div>` : ''}
                         ${p.oldData.power !== p.newData.power_level ? `<div class="update-diff">Power: ${p.oldData.power || '?'} -> ${p.newData.power_level || '?'}</div>` : ''}
                     </div>
                 </li>`).join('')}</ul>
@@ -205,7 +205,7 @@ export function renderSnapshotAnalysisResults(analysis) {
             <ul>${foundPlayers.map((p, index) => `
                 <li id="snap-found-${index}">
                     <input type="checkbox" checked data-snapshot-type="found" data-index="${index}">
-                    <div class="sync-details new-player">+ ${p.name} (TH: ${p.th_level || '?'}, Power: ${p.power_level || '?'})</div>
+                    <div class="sync-details new-player">+ ${p.name} (TH: ${p.th_level ? formatTh(p.th_level) : '?'}, Power: ${p.power_level || '?'})</div>
                 </li>`).join('')}</ul>
         </div>`;
     }
@@ -216,7 +216,7 @@ export function renderSnapshotAnalysisResults(analysis) {
             <ul>${unmappedPlayers.map((p, index) => `
                 <li id="snap-unmapped-${index}">
                     <input type="checkbox" checked data-snapshot-type="unmapped" data-index="${index}">
-                    <div class="sync-details removed-player">? ${p.name} (TH: ${p.th_level || '?'}, Power: ${p.power_level || '?'})</div>
+                    <div class="sync-details removed-player">? ${p.name} (TH: ${p.th_level ? formatTh(p.th_level) : '?'}, Power: ${p.power_level || '?'})</div>
                     <label>${t('snapshotRemapTo')}</label>
                     <select class="snapshot-remap-select" data-unmapped-index="${index}">
                         <option value="">--</option>
@@ -314,7 +314,7 @@ export async function renderEventDetailView(eventId, eventName, switchTab) {
                             <input type="checkbox" class="event-player-select" data-player-id="${p.id}">
                             <div class="player-info">
                                 <span class="player-name">${p.name}</span>
-                                (P: ${p.power_level || '?'}, TH: ${p.th_level || '?'}, ${t('marchesLabel')}: ${p.marches || '?'})
+                                (P: ${p.power_level || '?'}, TH: ${p.th_level ? formatTh(p.th_level) : '?'}, ${t('marchesLabel')}: ${p.marches || '?'})
                             </div>
                         </div>
                     `).join('') : `<p>${t('noAvailablePlayers')}</p>`}
@@ -449,7 +449,7 @@ export async function renderSnapshotDetailView(date, switchTab) {
     const formattedDate = new Date(date).toLocaleDateString(state.currentLang); 
     let html = `<div class="event-detail-header"><h2>${t('snapshotDetailTitle', formattedDate)}</h2><button id="back-to-snapshots-list">${t('backToList')}</button></div>`; 
     
-    html += snapshotData.map(player => ` <div class="player-item"> <span class="player-name">${player.player_name}</span> <div class="player-details"> <span>${t('thLabel')}: <strong>${player.th_level || '?'}</strong></span> <span>${t('powerLabel')}: <strong>${player.power_level || '?'}</strong></span> <span>${t('marchesLabel')}: <strong>${player.marches || '?'}</strong></span> </div> </div> `).join(''); 
+    html += snapshotData.map(player => ` <div class="player-item"> <span class="player-name">${player.player_name}</span> <div class="player-details"> <span>${t('thLabel')}: <strong>${player.th_level ? formatTh(player.th_level) : '?'}</strong></span> <span>${t('powerLabel')}: <strong>${player.power_level || '?'}</strong></span> <span>${t('marchesLabel')}: <strong>${player.marches || '?'}</strong></span> </div> </div> `).join(''); 
     
     dom.snapshotsListContainer.innerHTML = html; 
     document.getElementById('back-to-snapshots-list').addEventListener('click', () => switchTab('snapshots-view')); 
@@ -466,15 +466,53 @@ export function attachKvkDetailListeners(kvkEventId, kvkEventName, switchTab) {}
 export async function renderStatistics() {
     const { data: players, error } = await supabaseClient.from('players').select('th_level, power_level').eq('is_active', true);
     if (error) { dom.statsContent.innerHTML = `<p class="error">${t('loadingError')}</p>`; return; }
-    let t8Count = 0, t9Count = 0, t10Count = 0;
+    
+    let t8Count = 0, t9Count = 0, th30Count = 0, tg1Count = 0, tg2Count = 0, tg3Count = 0;
     const powerBrackets = {};
+
     players.forEach(player => {
-        const th = player.th_level; if (th >= 22 && th <= 25) { t8Count++; } else if (th >= 26 && th <= 29) { t9Count++; } else if (th >= 30) { t10Count++; }
-        const powerNum = parsePower(player.power_level); if (powerNum > 0) { const bracket = Math.floor(powerNum / 10000000) * 10; powerBrackets[bracket] = (powerBrackets[bracket] || 0) + 1; }
+        const th = player.th_level;
+        if (th >= 22 && th <= 25) {
+            t8Count++;
+        } else if (th >= 26 && th <= 29) {
+            t9Count++;
+        } else if (th === 30) {
+            th30Count++;
+        } else if (th === 31) {
+            tg1Count++;
+        } else if (th === 32) {
+            tg2Count++;
+        } else if (th === 33) {
+            tg3Count++;
+        }
+
+        const powerNum = parsePower(player.power_level); 
+        if (powerNum > 0) { 
+            const bracket = Math.floor(powerNum / 10000000) * 10; 
+            powerBrackets[bracket] = (powerBrackets[bracket] || 0) + 1; 
+        }
     });
-    let statsHtml = `<p><strong>${t('unlockedUnits')}:</strong></p><p>${t('tier8')}: <strong>${t8Count}</strong></p><p>${t('tier9')}: <strong>${t9Count}</strong></p><p>${t('tier10')}: <strong>${t10Count}</strong></p><hr class="divider" style="margin: 15px 0;"><p><strong>${t('powerBrackets')}:</strong></p>`;
+
+    let statsHtml = `<p><strong>${t('unlockedUnits')}:</strong></p>
+        <p>${t('tier8')}: <strong>${t8Count}</strong></p>
+        <p>${t('tier9')}: <strong>${t9Count}</strong></p>
+        <p>${t('tier10_th30')}: <strong>${th30Count}</strong></p>
+        <p>${t('tier_tg1')}: <strong>${tg1Count}</strong></p>
+        <p>${t('tier_tg2')}: <strong>${tg2Count}</strong></p>
+        <p>${t('tier_tg3')}: <strong>${tg3Count}</strong></p>
+        <hr class="divider" style="margin: 15px 0;">
+        <p><strong>${t('powerBrackets')}:</strong></p>`;
+
     const sortedBrackets = Object.keys(powerBrackets).map(Number).sort((a, b) => a - b);
-    if (sortedBrackets.length > 0) { sortedBrackets.forEach(bracket => { if (bracket >= 10) { statsHtml += `<p>${t('powerBracketLabel', bracket)}: <strong>${powerBrackets[bracket]}</strong></p>`; } }); }
-    else { statsHtml += `<p>Brak danych o mocy.</p>`; }
+    if (sortedBrackets.length > 0) { 
+        sortedBrackets.forEach(bracket => { 
+            if (bracket >= 10) { 
+                statsHtml += `<p>${t('powerBracketLabel', bracket)}: <strong>${powerBrackets[bracket]}</strong></p>`; 
+            } 
+        }); 
+    } else { 
+        statsHtml += `<p>Brak danych o mocy.</p>`; 
+    }
+    
     dom.statsContent.innerHTML = statsHtml;
 }

@@ -31,3 +31,30 @@ export function debounce(func, delay) {
         timeout = setTimeout(() => func.apply(context, args), delay);
     };
 }
+
+// Nowe funkcje do obsługi TH i TG
+export function formatTh(th) {
+    if (th > 30) {
+        return `TG${th - 30}`;
+    }
+    return th.toString();
+}
+
+export function parseTh(thString) {
+    if (!thString) {
+        return null;
+    }
+    const upperCaseTh = thString.toUpperCase().trim();
+    if (upperCaseTh.startsWith('TG')) {
+        const level = parseInt(upperCaseTh.substring(2), 10);
+        if (isNaN(level)) {
+            return null;
+        }
+        return 30 + level;
+    }
+    const parsedTh = parseInt(thString, 10);
+    if (isNaN(parsedTh)) {
+        return null;
+    }
+    return parsedTh;
+}
