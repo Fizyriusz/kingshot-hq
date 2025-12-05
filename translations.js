@@ -139,7 +139,11 @@ export const translations = {
         // ZMIANA ISTNIEJĄCEGO KLUCZA
         saveHistoricalSnapshot: "Zapisz Historyczny Snapshot",
         historicalSnapshotSuccess: (count) => `Pomyślnie dodano ${count} wpisów historycznych.`,
-        historicalSnapshotError: "Błąd zapisu historycznego snapshotu. Upewnij się, że data jest wybrana."
+        historicalSnapshotError: "Błąd zapisu historycznego snapshotu. Upewnij się, że data jest wybrana.",
+
+        // NOWE KLUCZE DLA MODALA STATYSTYK
+        statisticsModalTitle: (category) => `Gracze w kategorii: ${category}`,
+        noPlayersInStat: "Brak graczy w tej kategorii."
     },
     en: {
         appTitle: "Kingshot HQ - Command Center",
@@ -287,6 +291,10 @@ selectPlayer: "Select player...",
         // CHANGE EXISTING KEY
         saveHistoricalSnapshot: "Save Historical Snapshot",
         historicalSnapshotSuccess: (count) => `Successfully added ${count} historical entries.`,
-        historicalSnapshotError: "Error saving historical snapshot. Make sure the date is selected."
+        historicalSnapshotError: "Error saving historical snapshot. Make sure the date is selected.",
+
+        // NEW KEYS FOR STATS MODAL
+        statisticsModalTitle: (category) => `Players in category: ${category}`,
+        noPlayersInStat: "No players in this category."
     }
 };

@@ -7,7 +7,7 @@ import {
     setMemberSort, setLastSyncAnalysis, setEventDetailSort,
     setLastSnapshotAnalysis 
 } from './state.js';
-import { t, parseTh } from './utils.js';
+import { t, parseTh, parsePower } from './utils.js';
 import {
     applyStaticTranslations,
     renderMembersView,
@@ -18,7 +18,8 @@ import {
     renderSnapshotsView,
     renderSnapshotDetailView,
     renderSnapshotAnalysisResults, 
-    renderStatistics
+    renderStatistics,
+    renderStatsModal
 } from './render.js';
 
 // --- GŁÓWNA LOGIKA APLIKACJI ---
@@ -442,6 +443,49 @@ function init() {
             const snapshotDate = snapshotItem.dataset.date; 
             switchTab('snapshots-view', { date: snapshotDate });
         } 
+    });
+
+    // --- NOWE LISTENERY MODALA STATYSTYK ---
+    dom.statsContent.addEventListener('click', async (e) => {
+        const statItem = e.target.closest('.stat-item');
+        if (!statItem) return;
+
+        const { statType, minTh, maxTh, minPower, maxPower, category } = statItem.dataset;
+
+        // Pobierz wszystkich aktywnych graczy (zamiast pobierać ich za każdym razem, można by to zoptymalizować)
+        const { data: players, error } = await supabaseClient
+            .from('players')
+            .select('name, th_level, power_level, marches')
+            .eq('is_active', true);
+
+        if (error) {
+            alert(t('loadingError'));
+            return;
+        }
+
+        let filteredPlayers = [];
+        if (statType === 'th-range') {
+            const min = parseInt(minTh, 10);
+            const max = parseInt(maxTh, 10);
+            filteredPlayers = players.filter(p => p.th_level >= min && p.th_level <= max);
+        } else if (statType === 'power-bracket') {
+            const minP = parseFloat(minPower) * 1000000;
+            const maxP = (parseFloat(maxPower) + 0.999) * 1000000;
+            filteredPlayers = players.filter(p => {
+                const powerNum = parsePower(p.power_level);
+                return powerNum >= minP && powerNum < maxP;
+            });
+        }
+        
+        renderStatsModal(category, filteredPlayers);
+    });
+
+    const closeModal = () => dom.statsModal.classList.add('hidden');
+    dom.statsModalCloseButton.addEventListener('click', closeModal);
+    dom.statsModal.addEventListener('click', (e) => {
+        if (e.target === dom.statsModal) {
+            closeModal();
+        }
     });
     
     // --- START APLIKACJI ---

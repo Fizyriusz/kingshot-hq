@@ -462,7 +462,6 @@ export function attachKvkDetailListeners(kvkEventId, kvkEventName, switchTab) {}
 
 
 // --- FUNKCJA STATYSTYK ---
-// ... (bez zmian) ...
 export async function renderStatistics() {
     const { data: players, error } = await supabaseClient.from('players').select('th_level, power_level').eq('is_active', true);
     if (error) { dom.statsContent.innerHTML = `<p class="error">${t('loadingError')}</p>`; return; }
@@ -472,19 +471,12 @@ export async function renderStatistics() {
 
     players.forEach(player => {
         const th = player.th_level;
-        if (th >= 22 && th <= 25) {
-            t8Count++;
-        } else if (th >= 26 && th <= 29) {
-            t9Count++;
-        } else if (th === 30) {
-            th30Count++;
-        } else if (th === 31) {
-            tg1Count++;
-        } else if (th === 32) {
-            tg2Count++;
-        } else if (th === 33) {
-            tg3Count++;
-        }
+        if (th >= 22 && th <= 25) t8Count++;
+        else if (th >= 26 && th <= 29) t9Count++;
+        else if (th === 30) th30Count++;
+        else if (th === 31) tg1Count++;
+        else if (th === 32) tg2Count++;
+        else if (th === 33) tg3Count++;
 
         const powerNum = parsePower(player.power_level); 
         if (powerNum > 0) { 
@@ -494,12 +486,12 @@ export async function renderStatistics() {
     });
 
     let statsHtml = `<p><strong>${t('unlockedUnits')}:</strong></p>
-        <p>${t('tier8')}: <strong>${t8Count}</strong></p>
-        <p>${t('tier9')}: <strong>${t9Count}</strong></p>
-        <p>${t('tier10_th30')}: <strong>${th30Count}</strong></p>
-        <p>${t('tier_tg1')}: <strong>${tg1Count}</strong></p>
-        <p>${t('tier_tg2')}: <strong>${tg2Count}</strong></p>
-        <p>${t('tier_tg3')}: <strong>${tg3Count}</strong></p>
+        <div class="stat-item" data-stat-type="th-range" data-min-th="22" data-max-th="25" data-category="${t('tier8')}"><p>${t('tier8')}: <strong>${t8Count}</strong></p></div>
+        <div class="stat-item" data-stat-type="th-range" data-min-th="26" data-max-th="29" data-category="${t('tier9')}"><p>${t('tier9')}: <strong>${t9Count}</strong></p></div>
+        <div class="stat-item" data-stat-type="th-range" data-min-th="30" data-max-th="30" data-category="${t('tier10_th30')}"><p>${t('tier10_th30')}: <strong>${th30Count}</strong></p></div>
+        <div class="stat-item" data-stat-type="th-range" data-min-th="31" data-max-th="31" data-category="${t('tier_tg1')}"><p>${t('tier_tg1')}: <strong>${tg1Count}</strong></p></div>
+        <div class="stat-item" data-stat-type="th-range" data-min-th="32" data-max-th="32" data-category="${t('tier_tg2')}"><p>${t('tier_tg2')}: <strong>${tg2Count}</strong></p></div>
+        <div class="stat-item" data-stat-type="th-range" data-min-th="33" data-max-th="33" data-category="${t('tier_tg3')}"><p>${t('tier_tg3')}: <strong>${tg3Count}</strong></p></div>
         <hr class="divider" style="margin: 15px 0;">
         <p><strong>${t('powerBrackets')}:</strong></p>`;
 
@@ -507,7 +499,8 @@ export async function renderStatistics() {
     if (sortedBrackets.length > 0) { 
         sortedBrackets.forEach(bracket => { 
             if (bracket >= 10) { 
-                statsHtml += `<p>${t('powerBracketLabel', bracket)}: <strong>${powerBrackets[bracket]}</strong></p>`; 
+                const category = t('powerBracketLabel', bracket);
+                statsHtml += `<div class="stat-item" data-stat-type="power-bracket" data-min-power="${bracket}" data-max-power="${bracket + 9.999}" data-category="${category}"><p>${category}: <strong>${powerBrackets[bracket]}</strong></p></div>`; 
             } 
         }); 
     } else { 
@@ -515,4 +508,28 @@ export async function renderStatistics() {
     }
     
     dom.statsContent.innerHTML = statsHtml;
+}
+
+// NOWA FUNKCJA - RENDEROWANIE MODALA STATYSTYK
+export function renderStatsModal(category, players) {
+    dom.statsModalTitle.textContent = t('statisticsModalTitle', category);
+
+    if (players.length === 0) {
+        dom.statsModalPlayerList.innerHTML = `<p>${t('noPlayersInStat')}</p>`;
+    } else {
+        dom.statsModalPlayerList.innerHTML = players
+            .sort((a, b) => parsePower(b.power_level) - parsePower(a.power_level)) // Sortuj po mocy malejąco
+            .map(player => `
+            <div class="player-item">
+                <span class="player-name">${player.name}</span>
+                <div class="player-details">
+                    <span>${t('thLabel')}: <strong>${player.th_level ? formatTh(player.th_level) : '?'}</strong></span>
+                    <span>${t('powerLabel')}: <strong>${player.power_level || '?'}</strong></span>
+                    <span>${t('marchesLabel')}: <strong>${player.marches || '?'}</strong></span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    dom.statsModal.classList.remove('hidden');
 }

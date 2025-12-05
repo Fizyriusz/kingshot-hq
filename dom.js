@@ -37,6 +37,12 @@ export const snapshotDataInput = document.getElementById('snapshot-data-input');
 export const analyzeSnapshotButton = document.getElementById('analyze-snapshot-button');
 export const snapshotResultsContainer = document.getElementById('snapshot-results-container');
 
+// NOWE ELEMENTY MODALA STATYSTYK
+export const statsModal = document.getElementById('stats-modal');
+export const statsModalCloseButton = document.querySelector('#stats-modal .modal-close-button');
+export const statsModalTitle = document.getElementById('stats-modal-title');
+export const statsModalPlayerList = document.getElementById('stats-modal-player-list');
+
 // Usunięto elementy KvK
 
 export const memberControls = [
